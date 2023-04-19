@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 
 class UserDetails extends StatefulWidget {
   const UserDetails({super.key});
@@ -41,7 +39,7 @@ class _UserDetailsState extends State<UserDetails> {
       body: Column(
         children: <Widget>[
           Padding(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Row(
               children: <Widget>[
                 Container(
@@ -134,7 +132,7 @@ class _UserDetailsState extends State<UserDetails> {
             title: const Expanded(
               child: Text(
                 'Ирхэд мэдэгдэл авах',
-                style: const TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16),
               ),
             ),
             trailing: Switch(
@@ -151,7 +149,7 @@ class _UserDetailsState extends State<UserDetails> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.all(10),
+            padding: const EdgeInsets.all(10),
             child: Container(
               height: 2,
               width: double.infinity,
@@ -160,7 +158,7 @@ class _UserDetailsState extends State<UserDetails> {
                   border: Border.all(
                     color: Colors.ligthBlack,
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(4))),
+                  borderRadius: const BorderRadius.all(Radius.circular(4))),
             ),
           ),
           ListTile(
@@ -171,7 +169,7 @@ class _UserDetailsState extends State<UserDetails> {
             title: const Expanded(
               child: Text(
                 'Гархад мэдэгдэл авах',
-                style: const TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16),
               ),
             ),
             trailing: Switch(
@@ -203,8 +201,8 @@ class _UserDetailsState extends State<UserDetails> {
                   height: 0,
                   child: TextButton.icon(
                     onPressed: () {},
-                    icon: Icon(Icons.calendar_month_outlined),
-                    label: Text('16/Гур'),
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    label: const Text('16/Гур'),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.ligthBlack,
                       textStyle: const TextStyle(
@@ -268,7 +266,7 @@ class _UserDetailsState extends State<UserDetails> {
                         style: const TextStyle(fontSize: 16),
                       ),
                     ),
-                    trailing: Text("11:00"));
+                    trailing: const Text("11:00"));
               },
             ),
           ),

@@ -1,3 +1,5 @@
+// ignore_for_file: file_names
+
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -25,7 +27,9 @@ class SplashScreen extends StatelessWidget {
   }
 
   Future callDelay(BuildContext context) async {
-    await Future.delayed(const Duration(milliseconds: 5000), () {});
-    Navigator.pushNamed(context, "/loginPage");
+    await Future.delayed(const Duration(milliseconds: 5000), () {})
+        .then((value) {
+      Navigator.pushNamed(context, "/loginPage");
+    });
   }
 }

@@ -1,10 +1,10 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/place.dart';
+import '../models/database.dart';
 
 class AddLocation extends StatefulWidget {
   const AddLocation({super.key});
@@ -19,7 +19,8 @@ class CchooseLocationState extends State<AddLocation> {
   PanelController panelController = PanelController();
   late GoogleMapController _controller;
 
-  String _selectText = "Байршил сонгох";
+  DB db = DB();
+  final String _selectText = "Байршил сонгох";
   List<String> chipSelect = ["150 M", "500 M", "1 km", "2km", "5km"];
   int? _value = 1;
   double _radius = 150;
@@ -36,7 +37,7 @@ class CchooseLocationState extends State<AddLocation> {
 
   Circle? _circle;
 
-  Future createUser() async {
+  Future createLocation() async {
     if (locationNameController.text.isEmpty) {
       setState(() {
         _showWarning = true;
@@ -44,8 +45,6 @@ class CchooseLocationState extends State<AddLocation> {
       throw Exception("No name");
     }
     _showWarning = false;
-    final docLocation =
-        FirebaseFirestore.instance.collection('locations').doc();
     PlaceLocation newLocation = PlaceLocation(
         name: locationNameController.text,
         latitude: _center!.latitude,
@@ -53,21 +52,20 @@ class CchooseLocationState extends State<AddLocation> {
         radius: _radius,
         address: "Khan uul",
         userId: "1",
-        id: docLocation.id);
+        id: "0");
 
-    final json = newLocation.toJson();
-    await docLocation.set(json);
+    await db.addLocations(newLocation);
   }
 
   void _onCameraMove(CameraPosition position) {
     setState(() {
       _center = position.target;
       _marker = Marker(
-        markerId: MarkerId('center_marker'),
+        markerId: const MarkerId('center_marker'),
         position: _center!,
       );
       _circle = Circle(
-        circleId: CircleId('center_circle'),
+        circleId: const CircleId('center_circle'),
         center: _center!,
         radius: _radius,
         fillColor: Colors.blue.withOpacity(0.1),
@@ -79,18 +77,18 @@ class CchooseLocationState extends State<AddLocation> {
 
   void _updateCameraPosition(LatLng latLng, double zoom) {
     CameraPosition newPosition = CameraPosition(target: latLng, zoom: zoom);
-    _controller!.animateCamera(CameraUpdate.newCameraPosition(newPosition));
+    _controller.animateCamera(CameraUpdate.newCameraPosition(newPosition));
   }
 
   @override
   void initState() {
     _center = kGooglePlex.target;
     _marker = Marker(
-      markerId: MarkerId('center_marker'),
+      markerId: const MarkerId('center_marker'),
       position: _center!,
     );
     _circle = Circle(
-      circleId: CircleId('center_circle'),
+      circleId: const CircleId('center_circle'),
       center: _center!,
       radius: _radius,
       fillColor: Colors.blue.withOpacity(0.1),
@@ -115,7 +113,7 @@ class CchooseLocationState extends State<AddLocation> {
       },
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(50.0),
+          preferredSize: const Size.fromHeight(50.0),
           child: AppBar(
             toolbarHeight: 50.0,
             automaticallyImplyLeading: false,
@@ -137,11 +135,11 @@ class CchooseLocationState extends State<AddLocation> {
                 color: Colors.black,
                 onPressed: () async {
                   try {
-                    await createUser();
-                    Navigator.pop(context);
-                  } catch (e) {
-                    print('An error occurred while creating user: $e');
-                  }
+                    await createLocation().then((value) {
+                      Navigator.pushNamed(context, '/homePage');
+                    });
+                    // ignore: empty_catches
+                  } catch (e) {}
                 },
               ),
             ],
@@ -178,7 +176,8 @@ class CchooseLocationState extends State<AddLocation> {
                           color: Colors.grey.withOpacity(0.5),
                           spreadRadius: 5,
                           blurRadius: 7,
-                          offset: Offset(0, 3), // changes position of shadow
+                          offset:
+                              const Offset(0, 3), // changes position of shadow
                         ),
                       ],
                       borderRadius:
@@ -254,7 +253,7 @@ class CchooseLocationState extends State<AddLocation> {
                 ),
               ),
               if (_showWarning)
-                Text(
+                const Text(
                   'Text is required',
                   style: TextStyle(color: Colors.red),
                 ),
@@ -397,7 +396,9 @@ class CchooseLocationState extends State<AddLocation> {
                   mapType: MapType.normal,
                   onCameraMove: _onCameraMove,
                   initialCameraPosition: kGooglePlex,
+                  // ignore: prefer_collection_literals
                   markers: _marker != null ? Set.of([_marker!]) : Set(),
+                  // ignore: prefer_collection_literals
                   circles: _circle != null ? Set.of([_circle!]) : Set(),
                   onMapCreated: (GoogleMapController controller) {
                     _controller = controller;

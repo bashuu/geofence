@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:geofence/Register/otpPage.dart';
 import 'package:geofence/geofence/peopleMap.dart';
-import 'package:geofence/places/addLocation.dart';
 import 'package:geofence/places/geoLocation.dart';
 import 'package:geofence/settings/settings.dart';
 
@@ -13,8 +11,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final _selectedItemColor = Colors.darkerWhite;
-  final _unselectedItemColor = Colors.darkerWhite;
+  // final _selectedItemColor = Colors.darkerWhite;
+  // final _unselectedItemColor = Colors.darkerWhite;
   final _selectedBgColor = Colors.brightOrange;
   final _unselectedBgColor = Colors.darkerWhite;
   int _selectedIndex = 0;
@@ -34,7 +32,7 @@ class _HomePageState extends State<HomePage> {
     SettingsList()
   ];
 
-  Widget _buildIcon(IconData iconData, int index) => Container(
+  Widget _buildIcon(IconData iconData, int index) => SizedBox(
         width: double.infinity,
         height: kBottomNavigationBarHeight,
         child: ClipRRect(
@@ -61,7 +59,7 @@ class _HomePageState extends State<HomePage> {
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: PreferredSize(
-        preferredSize: Size.fromHeight(20.0),
+        preferredSize: const Size.fromHeight(20.0),
         child: BottomNavigationBar(
           items: <BottomNavigationBarItem>[
             BottomNavigationBarItem(

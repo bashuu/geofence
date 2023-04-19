@@ -24,9 +24,8 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
-  theme:
   ThemeData(
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
     iconTheme: IconThemeData(
       color: Colors.ligthBlack,
     ),

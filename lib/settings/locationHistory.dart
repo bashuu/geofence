@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 
 class LocationHistory extends StatefulWidget {
   const LocationHistory({super.key});
@@ -14,7 +12,7 @@ class _LocationHistoryState extends State<LocationHistory> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50.0),
+        preferredSize: const Size.fromHeight(50.0),
         child: AppBar(
           toolbarHeight: 50.0,
           automaticallyImplyLeading: false,
@@ -40,7 +38,7 @@ class _LocationHistoryState extends State<LocationHistory> {
           ],
         ),
       ),
-      body: Column(children: <Widget>[]),
+      body: Column(children: const <Widget>[]),
     );
   }
 }

@@ -1,6 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
-
 class PlaceLocation {
   final String name;
   final double latitude;
@@ -8,7 +5,7 @@ class PlaceLocation {
   final double radius;
   final String address;
   final String userId;
-  final String id;
+  String id;
 
   PlaceLocation(
       {required this.name,

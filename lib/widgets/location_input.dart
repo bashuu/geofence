@@ -30,7 +30,7 @@ class _LocationInputState extends State<LocationInput> {
         width: MediaQuery.of(context).size.width,
         alignment: Alignment.center,
         child: _previewImageUrl == ""
-            ? Text("No location chosen", textAlign: TextAlign.center)
+            ? const Text("No location chosen", textAlign: TextAlign.center)
             : Image.network(
                 _previewImageUrl,
                 fit: BoxFit.cover,
@@ -41,7 +41,7 @@ class _LocationInputState extends State<LocationInput> {
         children: <Widget>[
           IconButton(
             onPressed: _getCurrentUserloc,
-            icon: Icon(Icons.location_on),
+            icon: const Icon(Icons.location_on),
           )
         ],
       )

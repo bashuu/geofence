@@ -1,3 +1,4 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
 
 class ConfirmationAlertDialog extends StatelessWidget {
@@ -8,7 +9,8 @@ class ConfirmationAlertDialog extends StatelessWidget {
   final VoidCallback onConfirmPressed;
   final VoidCallback onCancelPressed;
 
-  ConfirmationAlertDialog({
+  const ConfirmationAlertDialog({
+    super.key,
     required this.title,
     required this.content,
     this.confirmButtonText = "Confirm",
@@ -24,12 +26,12 @@ class ConfirmationAlertDialog extends StatelessWidget {
       content: Text(content),
       actions: [
         TextButton(
-          child: Text(cancelButtonText),
           onPressed: onCancelPressed,
+          child: Text(cancelButtonText),
         ),
         TextButton(
-          child: Text(confirmButtonText),
           onPressed: onConfirmPressed,
+          child: Text(confirmButtonText),
         ),
       ],
     );

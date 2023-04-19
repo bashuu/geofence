@@ -1,6 +1,6 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 
 class LoginParent extends StatefulWidget {
   const LoginParent({super.key});
@@ -114,7 +114,8 @@ class _LoginParentState extends State<LoginParent> {
                                   Offset(0, 3), // changes position of shadow
                             ),
                           ],
-                          borderRadius: BorderRadius.all(Radius.circular(15))),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(15))),
                       child: TextField(
                         controller: passwordCont,
                         keyboardType: TextInputType.visiblePassword,
@@ -125,12 +126,13 @@ class _LoginParentState extends State<LoginParent> {
                           ),
                           suffixIcon: IconButton(
                             icon: ispasswordev
-                                ? Icon(
+                                ? const Icon(
                                     Icons.visibility_off,
                                     color: Colors.ligthBlack,
                                     size: 20,
                                   )
-                                : Icon(
+                                // ignore: dead_code
+                                : const Icon(
                                     Icons.visibility,
                                     color: Colors.ligthBlack,
                                     size: 20,
@@ -155,7 +157,7 @@ class _LoginParentState extends State<LoginParent> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(left: 252.0, top: 8.0),
+                    padding: const EdgeInsets.only(left: 252.0, top: 8.0),
                     child: GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(context, "/loginParent");
@@ -184,10 +186,12 @@ class _LoginParentState extends State<LoginParent> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3), // changes position of shadow
+                            offset: const Offset(
+                                0, 3), // changes position of shadow
                           ),
                         ],
-                        borderRadius: BorderRadius.all(Radius.circular(15))),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(15))),
                     child: TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/homePage');
@@ -212,7 +216,7 @@ class _LoginParentState extends State<LoginParent> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(top: 18.0),
+                    padding: const EdgeInsets.only(top: 18.0),
                     child: GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(context, "/registerPage");

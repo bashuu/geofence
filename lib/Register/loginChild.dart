@@ -21,7 +21,7 @@ class _LoginChildPageState extends State<LoginChildPage> {
         },
         child: Scaffold(
             appBar: PreferredSize(
-              preferredSize: Size.fromHeight(50.0),
+              preferredSize: const Size.fromHeight(50.0),
               child: AppBar(
                 centerTitle: true,
                 flexibleSpace: Container(),
@@ -60,11 +60,12 @@ class _LoginChildPageState extends State<LoginChildPage> {
                               color: Colors.grey.withOpacity(0.5),
                               spreadRadius: 5,
                               blurRadius: 7,
-                              offset:
-                                  Offset(0, 3), // changes position of shadow
+                              offset: const Offset(
+                                  0, 3), // changes position of shadow
                             ),
                           ],
-                          borderRadius: BorderRadius.all(Radius.circular(15))),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(15))),
                       child: TextField(
                         controller: emailCont,
                         keyboardType: TextInputType.emailAddress,
@@ -113,10 +114,12 @@ class _LoginChildPageState extends State<LoginChildPage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3), // changes position of shadow
+                            offset: const Offset(
+                                0, 3), // changes position of shadow
                           ),
                         ],
-                        borderRadius: BorderRadius.all(Radius.circular(15))),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(15))),
                     child: TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/otpPage');

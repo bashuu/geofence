@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 
 class SettingsList extends StatefulWidget {
   const SettingsList({super.key});
@@ -36,7 +34,7 @@ class SettingsListState extends State<SettingsList> {
       body: Column(
         children: <Widget>[
           Padding(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Container(
               width: MediaQuery.of(context).size.width * 0.9,
               height: 80,
@@ -85,7 +83,7 @@ class SettingsListState extends State<SettingsList> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Container(
               width: MediaQuery.of(context).size.width * 0.9,
               height: MediaQuery.of(context).size.width * 0.7,
@@ -253,7 +251,7 @@ class SettingsListState extends State<SettingsList> {
                     color: Colors.grey.withOpacity(0.5),
                     spreadRadius: 5,
                     blurRadius: 7,
-                    offset: Offset(0, 3), // changes position of shadow
+                    offset: const Offset(0, 3), // changes position of shadow
                   ),
                 ],
                 borderRadius: const BorderRadius.all(Radius.circular(15))),

@@ -1,3 +1,4 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
 
 class DeviceList extends StatefulWidget {
@@ -13,7 +14,7 @@ class _DeviceListState extends State<DeviceList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50.0),
+        preferredSize: const Size.fromHeight(50.0),
         child: AppBar(
           centerTitle: true,
           flexibleSpace: Container(),
@@ -98,7 +99,8 @@ class _DeviceListState extends State<DeviceList> {
                     SizedBox(
                       width: MediaQuery.of(context).size.height * 0.15,
                     ),
-                    IconButton(onPressed: () {}, icon: Icon(Icons.delete)),
+                    IconButton(
+                        onPressed: () {}, icon: const Icon(Icons.delete)),
                   ],
                 ),
               );

@@ -1,15 +1,14 @@
+// ignore: file_names
 import 'dart:async';
-import 'dart:typed_data';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geofence/models/user.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../models/place.dart';
-import '../models/user.dart';
+import '../models/reference.dart';
+import '../models/database.dart';
 
 class PeopleMap extends StatefulWidget {
   const PeopleMap({super.key});
@@ -21,14 +20,13 @@ class PeopleMap extends StatefulWidget {
 class _PeopleMapState extends State<PeopleMap> {
   late GoogleMapController _controller;
   // late StreamSubscription _locationSub;
-  Location _locationTracker = Location();
-
-  List<PlaceLocation> locations = [];
-
+  final Location _locationTracker = Location();
+  bool isLoading = true;
   List<User> users = [];
   List<Marker> markerList = [];
   List<Circle> circleList = [];
 
+  DB db = DB();
   late Marker marker;
   late Circle circle;
 
@@ -37,8 +35,13 @@ class _PeopleMapState extends State<PeopleMap> {
     zoom: 14.4746,
   );
 
+  //small test
   Future<void> init() async {
-    await getLocations().then((value) => {initLocations()});
+    await db.getLocations();
+    setState(() {
+      isLoading = false;
+    });
+    initLocations();
 
     marker = const Marker(
       markerId: MarkerId("Home"),
@@ -55,21 +58,8 @@ class _PeopleMapState extends State<PeopleMap> {
     );
   }
 
-  Future<void> getLocations() async {
-    locations = [];
-    await FirebaseFirestore.instance
-        .collection('locations')
-        .get()
-        .then((querySnapshot) {
-      querySnapshot.docs.forEach((doc) {
-        locations.add(PlaceLocation.fromJson(doc.data()));
-      });
-    });
-    initLocations();
-  }
-
   void initLocations() {
-    locations.forEach((element) {
+    for (var element in locations) {
       markerList.add(
         Marker(
           markerId: MarkerId("Location${element.id}"),
@@ -77,7 +67,7 @@ class _PeopleMapState extends State<PeopleMap> {
           draggable: false,
           zIndex: 2,
           flat: true,
-          anchor: Offset(0.5, 0.5),
+          anchor: const Offset(0.5, 0.5),
         ),
       );
       circleList.add(
@@ -89,9 +79,9 @@ class _PeopleMapState extends State<PeopleMap> {
             center: LatLng(element.latitude, element.longitude),
             strokeWidth: 2),
       );
-    });
+    }
 
-    users.forEach((element) {
+    for (var element in users) {
       markerList.add(
         Marker(
           markerId: MarkerId("User${element.id}"),
@@ -99,10 +89,10 @@ class _PeopleMapState extends State<PeopleMap> {
           draggable: false,
           zIndex: 2,
           flat: true,
-          anchor: Offset(0.5, 0.5),
+          anchor: const Offset(0.5, 0.5),
         ),
       );
-    });
+    }
   }
 
   Future<Uint8List> getMarker() async {
@@ -117,15 +107,15 @@ class _PeopleMapState extends State<PeopleMap> {
 
     setState(() {
       marker = Marker(
-        markerId: MarkerId("Home"),
+        markerId: const MarkerId("Home"),
         position: latLng,
         draggable: false,
         zIndex: 2,
         flat: true,
-        anchor: Offset(0.5, 0.5),
+        anchor: const Offset(0.5, 0.5),
       );
       circle = Circle(
-        circleId: CircleId("car"),
+        circleId: const CircleId("car"),
         radius: 100,
         zIndex: 1,
         strokeColor: Colors.brightOrange,
@@ -136,7 +126,7 @@ class _PeopleMapState extends State<PeopleMap> {
 
   void getCurrentLocation() async {
     try {
-      Uint8List imageData = await getMarker();
+      // Uint8List imageData = await getMarker();
       var location = await _locationTracker.getLocation();
 
       updateMarkerAndCircle(location);
@@ -171,7 +161,6 @@ class _PeopleMapState extends State<PeopleMap> {
   @override
   void initState() {
     init();
-    getCurrentLocation();
     super.initState();
   }
 
@@ -187,7 +176,7 @@ class _PeopleMapState extends State<PeopleMap> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50.0),
+        preferredSize: const Size.fromHeight(50.0),
         child: AppBar(
           toolbarHeight: 50.0,
           automaticallyImplyLeading: false,
@@ -212,7 +201,9 @@ class _PeopleMapState extends State<PeopleMap> {
       body: GoogleMap(
         mapType: MapType.normal,
         initialCameraPosition: kGooglePlex,
+        // ignore: unnecessary_null_comparison
         markers: Set.of((markerList != null) ? markerList : []),
+        // ignore: unnecessary_null_comparison
         circles: Set.of((markerList != null) ? circleList : []),
         onMapCreated: (GoogleMapController controller) {
           _controller = controller;
@@ -223,7 +214,7 @@ class _PeopleMapState extends State<PeopleMap> {
         onPressed: () {
           getCurrentLocation();
         },
-        child: Icon(Icons.location_searching),
+        child: const Icon(Icons.location_searching),
       ),
     );
   }

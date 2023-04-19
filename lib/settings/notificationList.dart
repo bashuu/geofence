@@ -13,7 +13,7 @@ class _NotificationListState extends State<NotificationList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50.0),
+        preferredSize: const Size.fromHeight(50.0),
         child: AppBar(
           toolbarHeight: 50.0,
           automaticallyImplyLeading: false,
@@ -67,7 +67,8 @@ class _NotificationListState extends State<NotificationList> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3), // changes position of shadow
+                            offset: const Offset(
+                                0, 3), // changes position of shadow
                           ),
                         ],
                       ),
@@ -108,7 +109,7 @@ class _NotificationListState extends State<NotificationList> {
                       width: 50,
                     ),
                     const Padding(
-                        padding: const EdgeInsets.only(top: 70),
+                        padding: EdgeInsets.only(top: 70),
                         child: Text("Өнөөдөр"))
                   ],
                 ),

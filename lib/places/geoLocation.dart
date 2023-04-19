@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/place.dart';
 import '../models/popUpModal.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../models/reference.dart';
+import '../models/database.dart';
 
 class GeoLocation extends StatefulWidget {
   const GeoLocation({super.key});
@@ -10,72 +14,43 @@ class GeoLocation extends StatefulWidget {
 }
 
 class _GeoLocationState extends State<GeoLocation> {
-  List<PlaceLocation> locations = [
-    PlaceLocation(
-        name: 'Location 1',
-        latitude: 37.4219999,
-        longitude: -122.0840575,
-        radius: 1,
-        address: "Khan uul",
-        userId: "1",
-        id: "1"),
-    PlaceLocation(
-        name: 'Location 2',
-        latitude: 37.4221999,
-        longitude: -122.0842575,
-        radius: 1,
-        address: "Khan uul",
-        userId: "1",
-        id: "2"),
-    PlaceLocation(
-        name: 'Location 3',
-        latitude: 37.4222999,
-        longitude: -122.0843575,
-        radius: 1,
-        address: "Khan uul",
-        userId: "1",
-        id: "3"),
-    PlaceLocation(
-        name: 'Location 4',
-        latitude: 37.4222999,
-        longitude: -122.0843575,
-        radius: 1,
-        address: "Khan uul",
-        userId: "1",
-        id: "4"),
-    PlaceLocation(
-        name: 'Location 5',
-        latitude: 37.4222999,
-        longitude: -122.0843575,
-        radius: 1,
-        address: "Khan uul",
-        userId: "1",
-        id: "5"),
-    PlaceLocation(
-        name: 'Location 6',
-        latitude: 37.4222999,
-        longitude: -122.0843575,
-        radius: 1,
-        address: "Khan uul",
-        userId: "1",
-        id: "5"),
-    PlaceLocation(
-        name: 'Location 7',
-        latitude: 37.4222999,
-        longitude: -122.0843575,
-        radius: 1,
-        address: "Khan uul",
-        userId: "1",
-        id: "5"),
-  ];
-
   bool isEditing = false;
+  bool isLoading = true;
+  DB db = DB();
+  Future<void> delete(PlaceLocation doc, int index) async {
+    setState(() {
+      isLoading = true;
+    });
+    db.deleteLocation(doc).then(
+      (value) async {
+        await db.getLocations();
+        setState(() {
+          isLoading = false;
+        });
+      },
+    );
+  }
+
+  Future<void> init() async {
+    await db.getLocations().then((value) {
+      // ignore: unnecessary_null_comparison
+      setState(() {
+        isLoading = false;
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    init();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50.0),
+        preferredSize: const Size.fromHeight(50.0),
         child: AppBar(
           toolbarHeight: 50.0,
           automaticallyImplyLeading: false,
@@ -100,63 +75,73 @@ class _GeoLocationState extends State<GeoLocation> {
       ),
       body: Column(
         children: <Widget>[
-          Container(
-            height: MediaQuery.of(context).size.height * 0.5,
-            child: ListView.separated(
-              itemCount: locations.length,
-              separatorBuilder: (context, index) {
-                // add a divider between items
-                return const Divider(
-                  height: 5,
-                  color: Colors.ligthBlack,
-                );
-              },
-              itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                  leading: isEditing
-                      ? IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red[400]),
-                          onPressed: () {
-                            showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return ConfirmationAlertDialog(
-                                      title: "Are you sure?",
-                                      content: "test",
-                                      confirmButtonText: "yes",
-                                      cancelButtonText: "no",
-                                      onConfirmPressed: () =>
-                                          (locations.removeAt(index)),
-                                      onCancelPressed: () =>
-                                          (Navigator.pop(context)));
-                                });
-                            // locations.removeAt(index);
-                          })
-                      : Icon(Icons.house, color: Colors.brightOrange),
-                  title: Row(
-                    children: [
-                      isEditing
-                          ? Icon(Icons.house, color: Colors.brightOrange)
-                          : const SizedBox(),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          locations[index].name,
-                          style: TextStyle(fontSize: 16),
+          isLoading
+              ? const CircularProgressIndicator()
+              : SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.5,
+                  child: ListView.separated(
+                    itemCount: locations.length,
+                    separatorBuilder: (context, index) {
+                      // add a divider between items
+                      return const Divider(
+                        height: 5,
+                        color: Colors.ligthBlack,
+                      );
+                    },
+                    itemBuilder: (BuildContext context, int index) {
+                      return ListTile(
+                        leading: isEditing
+                            ? IconButton(
+                                icon:
+                                    Icon(Icons.delete, color: Colors.red[400]),
+                                onPressed: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return ConfirmationAlertDialog(
+                                            title: "Are you sure?",
+                                            content: "test",
+                                            confirmButtonText: "yes",
+                                            cancelButtonText: "no",
+                                            onConfirmPressed: () async {
+                                              await delete(
+                                                      locations[index], index)
+                                                  .then((value) {
+                                                Navigator.of(context).pop();
+                                              });
+                                            },
+                                            onCancelPressed: () =>
+                                                (Navigator.of(context).pop()));
+                                      });
+                                  // locations.removeAt(index);
+                                })
+                            : const Icon(Icons.house,
+                                color: Colors.brightOrange),
+                        title: Row(
+                          children: [
+                            isEditing
+                                ? const Icon(Icons.house,
+                                    color: Colors.brightOrange)
+                                : const SizedBox(),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                locations[index].name,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                  trailing: IconButton(
-                    icon: Icon(Icons.arrow_forward_ios_outlined),
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/locationDetails');
+                        trailing: IconButton(
+                          icon: const Icon(Icons.arrow_forward_ios_outlined),
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/locationDetails');
+                          },
+                        ),
+                      );
                     },
                   ),
-                );
-              },
-            ),
-          ),
+                ),
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.15,
           ),
@@ -173,10 +158,10 @@ class _GeoLocationState extends State<GeoLocation> {
                     color: Colors.grey.withOpacity(0.5),
                     spreadRadius: 5,
                     blurRadius: 7,
-                    offset: Offset(0, 3), // changes position of shadow
+                    offset: const Offset(0, 3), // changes position of shadow
                   ),
                 ],
-                borderRadius: BorderRadius.all(Radius.circular(15))),
+                borderRadius: const BorderRadius.all(Radius.circular(15))),
             child: TextButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/addLocation');

@@ -1,3 +1,5 @@
+// ignore_for_file: file_names
+
 import 'package:flutter/material.dart';
 
 class OtpPage extends StatefulWidget {
@@ -21,7 +23,7 @@ class _OtpPageState extends State<OtpPage> {
         },
         child: Scaffold(
             appBar: PreferredSize(
-              preferredSize: Size.fromHeight(50.0),
+              preferredSize: const Size.fromHeight(50.0),
               child: AppBar(
                 centerTitle: true,
                 flexibleSpace: Container(),
@@ -64,7 +66,8 @@ class _OtpPageState extends State<OtpPage> {
                                   0, 3), // changes position of shadow
                             ),
                           ],
-                          borderRadius: BorderRadius.all(Radius.circular(15))),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(15))),
                       child: TextField(
                         controller: emailCont,
                         keyboardType: TextInputType.emailAddress,
@@ -116,10 +119,12 @@ class _OtpPageState extends State<OtpPage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3), // changes position of shadow
+                            offset: const Offset(
+                                0, 3), // changes position of shadow
                           ),
                         ],
-                        borderRadius: BorderRadius.all(Radius.circular(15))),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(15))),
                     child: TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/enterChildName');

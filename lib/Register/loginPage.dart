@@ -29,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
                     color: Colors.grey.withOpacity(0.5),
                     spreadRadius: 5,
                     blurRadius: 7,
-                    offset: Offset(0, 3), // changes position of shadow
+                    offset: const Offset(0, 3), // changes position of shadow
                   ),
                 ],
                 borderRadius: const BorderRadius.all(Radius.circular(15))),
@@ -51,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const Text("Эцэг эх"),
                 IconButton(
-                  icon: Icon(Icons.arrow_forward_ios),
+                  icon: const Icon(Icons.arrow_forward_ios),
                   color: Colors.ligthBlack,
                   iconSize: 24.0,
                   onPressed: () {
@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                     color: Colors.grey.withOpacity(0.5),
                     spreadRadius: 5,
                     blurRadius: 7,
-                    offset: Offset(0, 3), // changes position of shadow
+                    offset: const Offset(0, 3), // changes position of shadow
                   ),
                 ],
                 borderRadius: const BorderRadius.all(Radius.circular(15))),
@@ -101,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const Text("Хүүхэд"),
                 IconButton(
-                  icon: Icon(Icons.arrow_forward_ios),
+                  icon: const Icon(Icons.arrow_forward_ios),
                   color: Colors.ligthBlack,
                   iconSize: 24.0,
                   onPressed: () {
