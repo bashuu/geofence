@@ -1,5 +1,10 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
+import 'package:geofence/models/reference.dart';
+import 'package:geofence/models/user.dart';
+import 'package:location/location.dart';
+import 'package:logger/logger.dart';
+import '../models/database.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -9,9 +14,46 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  TextEditingController emailCont = TextEditingController();
+  TextEditingController username = TextEditingController();
   TextEditingController passwordCont = TextEditingController();
   TextEditingController repeatPassCont = TextEditingController();
+  bool _showWarning = false;
+  final Location _locationTracker = Location();
+
+  Future<void> registerUser() async {
+    Logger().i("check");
+    if (username.text.isEmpty) {
+      setState(() {
+        _showWarning = true;
+      });
+      // throw Exception("No name");
+    }
+
+    // ignore: unrelated_type_equality_checks
+    if (passwordCont.text != repeatPassCont) {
+      setState(() {
+        _showWarning = true;
+      });
+      // throw Exception("Password doesnot match");
+    }
+    _showWarning = false;
+    User newUser = User(
+        name: username.text,
+        latitude: 0,
+        longitude: 0,
+        password: passwordCont.text,
+        id: "0",
+        parent_id: "0");
+
+    if (await register(newUser)) {
+      await login(username.text, passwordCont.text).then((value) {
+        token = currentUser.name;
+        if (token != "") {
+          Navigator.pushNamed(context, '/homePage');
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,14 +114,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           borderRadius:
                               const BorderRadius.all(Radius.circular(15))),
                       child: TextField(
-                        controller: emailCont,
-                        keyboardType: TextInputType.emailAddress,
+                        controller: username,
+                        keyboardType: TextInputType.name,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(
-                            Icons.email_outlined,
+                            Icons.person,
                             size: 20,
                           ),
-                          hintText: 'И-Мэйл',
+                          hintText: 'Хэрэглэгчийн нэр',
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
                               color: Colors.transparent,
@@ -242,7 +284,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius:
                             const BorderRadius.all(Radius.circular(15))),
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        registerUser();
+                      },
                       style: ButtonStyle(
                         backgroundColor: MaterialStateProperty.all<Color>(
                             Colors.brightOrange), // background color

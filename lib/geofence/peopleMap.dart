@@ -3,16 +3,43 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geofence/models/user.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:logger/logger.dart';
+import 'package:workmanager/workmanager.dart';
 
 import '../models/reference.dart';
 import '../models/database.dart';
+import '../places/notification.dart' as notif;
+
+const fetchBackground = "fetchBackground";
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+@pragma(
+    'vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    switch (task) {
+      case fetchBackground:
+        Position userLocation = await Geolocator.getCurrentPosition();
+        notif.Notification notification =
+            notif.Notification(flutterLocalNotificationsPlugin);
+        notification.flutterLocalNotificationsPlugin =
+            flutterLocalNotificationsPlugin;
+        notification.showNotificationWithoutSound(userLocation);
+        break;
+    }
+    return Future.value(true);
+  });
+}
 
 class PeopleMap extends StatefulWidget {
   const PeopleMap({super.key});
-
+  static const fetchBackground = "fetchBackground";
   @override
   State<PeopleMap> createState() => _PeopleMapState();
 }
@@ -26,7 +53,6 @@ class _PeopleMapState extends State<PeopleMap> {
   List<Marker> markerList = [];
   List<Circle> circleList = [];
 
-  DB db = DB();
   late Marker marker;
   late Circle circle;
 
@@ -37,7 +63,7 @@ class _PeopleMapState extends State<PeopleMap> {
 
   //small test
   Future<void> init() async {
-    await db.getLocations();
+    await getLocations();
     setState(() {
       isLoading = false;
     });
@@ -162,6 +188,16 @@ class _PeopleMapState extends State<PeopleMap> {
   void initState() {
     init();
     super.initState();
+    Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: true,
+    );
+
+    Workmanager().registerPeriodicTask(
+      "1",
+      fetchBackground,
+      frequency: Duration(minutes: 1),
+    );
   }
 
   @override
@@ -212,7 +248,7 @@ class _PeopleMapState extends State<PeopleMap> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          getCurrentLocation();
+          Logger().i("persing");
         },
         child: const Icon(Icons.location_searching),
       ),

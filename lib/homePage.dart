@@ -16,11 +16,23 @@ class _HomePageState extends State<HomePage> {
   final _selectedBgColor = Colors.brightOrange;
   final _unselectedBgColor = Colors.darkerWhite;
   int _selectedIndex = 0;
+  String latitude = 'waiting...';
+  String longitude = 'waiting...';
+  String altitude = 'waiting...';
+  String accuracy = 'waiting...';
+  String bearing = 'waiting...';
+  String speed = 'waiting...';
+  String time = 'waiting...';
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
   }
 
   Color _getBgColor(int index) =>

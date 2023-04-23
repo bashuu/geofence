@@ -1,6 +1,9 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
+import 'package:geofence/models/reference.dart';
+import 'package:logger/logger.dart';
+import '../models/database.dart';
 
 class LoginParent extends StatefulWidget {
   const LoginParent({super.key});
@@ -10,9 +13,9 @@ class LoginParent extends StatefulWidget {
 }
 
 class _LoginParentState extends State<LoginParent> {
-  TextEditingController emailCont = TextEditingController();
+  TextEditingController username = TextEditingController();
   TextEditingController passwordCont = TextEditingController();
-
+  bool _showWarning = false;
   @override
   Widget build(BuildContext context) {
     bool ispasswordev = true;
@@ -71,14 +74,14 @@ class _LoginParentState extends State<LoginParent> {
                           ],
                           borderRadius: BorderRadius.all(Radius.circular(15))),
                       child: TextField(
-                        controller: emailCont,
+                        controller: username,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(
                             Icons.email_outlined,
                             size: 20,
                           ),
-                          hintText: 'И-Мэйл',
+                          hintText: 'Хэрэглэгчийн нэр',
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
                               color: Colors.transparent,
@@ -160,7 +163,7 @@ class _LoginParentState extends State<LoginParent> {
                     padding: const EdgeInsets.only(left: 252.0, top: 8.0),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, "/loginParent");
+                        Navigator.pushNamed(context, "/registerPage");
                       },
                       child: const Text(
                         'Нууц үг сэргээх',
@@ -193,8 +196,21 @@ class _LoginParentState extends State<LoginParent> {
                         borderRadius:
                             const BorderRadius.all(Radius.circular(15))),
                     child: TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/homePage');
+                      onPressed: () async {
+                        if (username.text.isEmpty) {
+                          setState(() {
+                            _showWarning = true;
+                          });
+                          return;
+                          // throw Exception("No name");
+                        }
+                        await login(username.text, passwordCont.text)
+                            .then((value) {
+                          Logger().i(token);
+                          if (token == username.text) {
+                            Navigator.pushNamed(context, "/homePage");
+                          }
+                        });
                       },
                       style: ButtonStyle(
                         backgroundColor: MaterialStateProperty.all<Color>(

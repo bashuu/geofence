@@ -19,7 +19,6 @@ class CchooseLocationState extends State<AddLocation> {
   PanelController panelController = PanelController();
   late GoogleMapController _controller;
 
-  DB db = DB();
   final String _selectText = "Байршил сонгох";
   List<String> chipSelect = ["150 M", "500 M", "1 km", "2km", "5km"];
   int? _value = 1;
@@ -54,7 +53,7 @@ class CchooseLocationState extends State<AddLocation> {
         userId: "1",
         id: "0");
 
-    await db.addLocations(newLocation);
+    await addLocations(newLocation);
   }
 
   void _onCameraMove(CameraPosition position) {

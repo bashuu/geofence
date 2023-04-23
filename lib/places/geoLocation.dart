@@ -16,14 +16,13 @@ class GeoLocation extends StatefulWidget {
 class _GeoLocationState extends State<GeoLocation> {
   bool isEditing = false;
   bool isLoading = true;
-  DB db = DB();
   Future<void> delete(PlaceLocation doc, int index) async {
     setState(() {
       isLoading = true;
     });
-    db.deleteLocation(doc).then(
+    deleteLocation(doc).then(
       (value) async {
-        await db.getLocations();
+        await getLocations();
         setState(() {
           isLoading = false;
         });
@@ -32,8 +31,7 @@ class _GeoLocationState extends State<GeoLocation> {
   }
 
   Future<void> init() async {
-    await db.getLocations().then((value) {
-      // ignore: unnecessary_null_comparison
+    await getLocations().then((value) {
       setState(() {
         isLoading = false;
       });
@@ -73,11 +71,11 @@ class _GeoLocationState extends State<GeoLocation> {
           ],
         ),
       ),
-      body: Column(
-        children: <Widget>[
-          isLoading
-              ? const CircularProgressIndicator()
-              : SizedBox(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: <Widget>[
+                SizedBox(
                   height: MediaQuery.of(context).size.height * 0.5,
                   child: ListView.separated(
                     itemCount: locations.length,
@@ -136,55 +134,59 @@ class _GeoLocationState extends State<GeoLocation> {
                           icon: const Icon(Icons.arrow_forward_ios_outlined),
                           onPressed: () {
                             Navigator.pushNamed(context, '/locationDetails');
+                            locationDetails = locations[index];
                           },
                         ),
                       );
                     },
                   ),
                 ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.15,
-          ),
-          Container(
-            height: 50.0,
-            width: MediaQuery.of(context).size.width * 0.8,
-            decoration: BoxDecoration(
-                color: Colors.brightOrange,
-                border: Border.all(
-                  color: Colors.brightOrange,
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.15,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: const Offset(0, 3), // changes position of shadow
+                Container(
+                  height: 50.0,
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  decoration: BoxDecoration(
+                      color: Colors.brightOrange,
+                      border: Border.all(
+                        color: Colors.brightOrange,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                          offset:
+                              const Offset(0, 3), // changes position of shadow
+                        ),
+                      ],
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(15))),
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/addLocation');
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Colors.brightOrange), // background color
+                      padding: MaterialStateProperty.all<EdgeInsets>(
+                          const EdgeInsets.symmetric(
+                              vertical: 15, horizontal: 100)), // size
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(15), // border radius
+                      )),
+                    ),
+                    child: const Text(
+                      "Байршил нэмэх",
+                      style: TextStyle(color: Colors.ligthBlack),
+                    ),
                   ),
-                ],
-                borderRadius: const BorderRadius.all(Radius.circular(15))),
-            child: TextButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/addLocation');
-              },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(
-                    Colors.brightOrange), // background color
-                padding: MaterialStateProperty.all<EdgeInsets>(
-                    const EdgeInsets.symmetric(
-                        vertical: 15, horizontal: 100)), // size
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15), // border radius
-                )),
-              ),
-              child: const Text(
-                "Байршил нэмэх",
-                style: TextStyle(color: Colors.ligthBlack),
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }

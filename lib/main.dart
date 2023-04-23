@@ -18,11 +18,21 @@ import 'package:geofence/settings/deviceList.dart';
 import 'package:geofence/settings/locationHistory.dart';
 import 'package:geofence/settings/notificationList.dart';
 import 'package:geofence/settings/settings.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:logger/logger.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  if (await Permission.location.isDenied) {
+    Permission.location.request();
+  }
+
+  if (await Permission.locationAlways.isDenied) {
+    Permission.location.request();
+  }
+
   runApp(const MyApp());
   ThemeData(
       appBarTheme: const AppBarTheme(

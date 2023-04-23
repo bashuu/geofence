@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import '../models/database.dart';
+import '../models/reference.dart';
+import '../models/user.dart';
 
 class LocationDetails extends StatefulWidget {
   const LocationDetails({super.key});
@@ -11,8 +15,8 @@ class LocationDetails extends StatefulWidget {
 class _LocationDetailsState extends State<LocationDetails> {
   PanelController panelController = PanelController();
   TextEditingController locationSearchController = TextEditingController();
-  String address = "Bogd Khaan Palace Museum";
-  List<String> userList = ["User1", "User2", "User3"];
+  bool _isLoading = false;
+
   List<String> historyList = ["User1", "User2", "User3"];
   List<String> chipSelect = [
     "2023/03/12",
@@ -21,6 +25,25 @@ class _LocationDetailsState extends State<LocationDetails> {
     "2023/03/15",
   ];
   int? _value = 1;
+
+  @override
+  void initState() {
+    setState(() {
+      _isLoading = true;
+    });
+    getUser();
+
+    super.initState();
+  }
+
+  Future<void> getUser() async {
+    await getAllLocationUsers(locationDetails).then((value) {
+      setState(() {
+        _isLoading = false;
+      });
+      Logger().e(locationUser.length);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +59,9 @@ class _LocationDetailsState extends State<LocationDetails> {
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
-            "Ажил",
-            style: TextStyle(
+          title: Text(
+            locationDetails.name,
+            style: const TextStyle(
               color: Colors.ligthBlack,
             ),
           ),
@@ -123,7 +146,7 @@ class _LocationDetailsState extends State<LocationDetails> {
                       width: 20,
                     ),
                     Text(
-                      address,
+                      locationDetails.address,
                       style: const TextStyle(fontSize: 20),
                     )
                   ],
@@ -161,7 +184,7 @@ class _LocationDetailsState extends State<LocationDetails> {
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.18,
                 child: ListView.separated(
-                  itemCount: userList.length,
+                  itemCount: locationUser.length,
                   separatorBuilder: (context, index) {
                     // add a divider between items
                     return const Divider(
@@ -187,7 +210,7 @@ class _LocationDetailsState extends State<LocationDetails> {
                       ),
                       title: Expanded(
                         child: Text(
-                          userList[index],
+                          locationUser[index].name,
                           style: const TextStyle(fontSize: 16),
                         ),
                       ),
@@ -276,7 +299,7 @@ class _LocationDetailsState extends State<LocationDetails> {
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.18,
                 child: ListView.separated(
-                  itemCount: userList.length,
+                  itemCount: locationUser.length,
                   separatorBuilder: (context, index) {
                     // add a divider between items
                     return const Divider(
@@ -288,7 +311,7 @@ class _LocationDetailsState extends State<LocationDetails> {
                     return ListTile(
                       title: Expanded(
                         child: Text(
-                          userList[index],
+                          locationUser[index].name,
                           style: const TextStyle(fontSize: 16),
                         ),
                       ),
