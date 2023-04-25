@@ -206,7 +206,6 @@ class _LoginParentState extends State<LoginParent> {
                         }
                         await login(username.text, passwordCont.text)
                             .then((value) {
-                          Logger().i(token);
                           if (token == username.text) {
                             Navigator.pushNamed(context, "/homePage");
                           }

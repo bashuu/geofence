@@ -31,16 +31,17 @@ class _LocationDetailsState extends State<LocationDetails> {
     setState(() {
       _isLoading = true;
     });
-    getUser();
+    getUser().then((value) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
 
     super.initState();
   }
 
   Future<void> getUser() async {
     await getAllLocationUsers(locationDetails).then((value) {
-      setState(() {
-        _isLoading = false;
-      });
       Logger().e(locationUser.length);
     });
   }
@@ -183,46 +184,51 @@ class _LocationDetailsState extends State<LocationDetails> {
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.18,
-                child: ListView.separated(
-                  itemCount: locationUser.length,
-                  separatorBuilder: (context, index) {
-                    // add a divider between items
-                    return const Divider(
-                      height: 5,
-                      color: Colors.ligthBlack,
-                    );
-                  },
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                      leading: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.brightOrange,
-                            ),
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(100))),
-                        child: const Icon(
-                          Icons.person,
-                          size: 32,
-                        ),
-                      ),
-                      title: Expanded(
-                        child: Text(
-                          locationUser[index].name,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.arrow_forward_ios_outlined),
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/userDetails');
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.separated(
+                        itemCount: locationUser.length,
+                        separatorBuilder: (context, index) {
+                          // add a divider between items
+                          return const Divider(
+                            height: 5,
+                            color: Colors.ligthBlack,
+                          );
+                        },
+                        itemBuilder: (BuildContext context, int index) {
+                          return Row(
+                            children: <Widget>[
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.brightOrange,
+                                    ),
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(100))),
+                                child: const Icon(
+                                  Icons.person,
+                                  size: 32,
+                                ),
+                              ),
+                              Container(
+                                child: Text(
+                                  locationUser[index].name,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                    Icons.arrow_forward_ios_outlined),
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/userDetails');
+                                },
+                              ),
+                            ],
+                          );
                         },
                       ),
-                    );
-                  },
-                ),
               ),
               Container(
                 height: 30.0,
@@ -298,26 +304,26 @@ class _LocationDetailsState extends State<LocationDetails> {
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.18,
-                child: ListView.separated(
-                  itemCount: locationUser.length,
-                  separatorBuilder: (context, index) {
-                    // add a divider between items
-                    return const Divider(
-                      height: 5,
-                      color: Colors.ligthBlack,
-                    );
-                  },
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                      title: Expanded(
-                        child: Text(
-                          locationUser[index].name,
-                          style: const TextStyle(fontSize: 16),
-                        ),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.separated(
+                        itemCount: locationUser.length,
+                        separatorBuilder: (context, index) {
+                          // add a divider between items
+                          return const Divider(
+                            height: 5,
+                            color: Colors.ligthBlack,
+                          );
+                        },
+                        itemBuilder: (BuildContext context, int index) {
+                          return Container(
+                            child: Text(
+                              locationUser[index].name,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.08,

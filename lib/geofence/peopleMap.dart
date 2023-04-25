@@ -1,9 +1,11 @@
 // ignore: file_names
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:geofence/models/place.dart';
 import 'package:geofence/models/user.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -14,8 +16,10 @@ import 'package:workmanager/workmanager.dart';
 import '../models/reference.dart';
 import '../models/database.dart';
 import '../places/notification.dart' as notif;
+import 'dart:math';
 
 const fetchBackground = "fetchBackground";
+late List<PlaceLocation> currentListLoc;
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
@@ -23,9 +27,31 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     'vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    // Logger().i("inputdata" + inputData.toString());
+
     switch (task) {
       case fetchBackground:
         Position userLocation = await Geolocator.getCurrentPosition();
+
+        if (inputData == null) break;
+        String json = inputData!['json'];
+        Map<String, dynamic> jsonMap = jsonDecode(json);
+        List<dynamic> longitudeList = jsonMap['longitude'];
+        List<dynamic> latitudeList = jsonMap['latitude'];
+        List<dynamic> rads = jsonMap['radius'];
+
+        for (int i = 0; i < longitudeList.length; i++) {
+          // Logger().i("userLocation" + Location!.toString());
+          if (isUserInLocation(
+              latitudeList[i],
+              longitudeList[i],
+              userLocation.latitude ?? 0,
+              userLocation.longitude ?? 0,
+              rads[i])) {
+            Logger().i("It's in");
+            return true;
+          }
+        }
         notif.Notification notification =
             notif.Notification(flutterLocalNotificationsPlugin);
         notification.flutterLocalNotificationsPlugin =
@@ -35,6 +61,26 @@ void callbackDispatcher() {
     }
     return Future.value(true);
   });
+}
+
+bool isUserInLocation(
+    double lat1, double lon1, double lat2, double lon2, double radius) {
+  double earthRadius = 6378137; // radius of the earth in meters
+  double dLat = _toRadians(lat2 - lat1);
+  double dLon = _toRadians(lon2 - lon1);
+  double a = sin(dLat / 2) * sin(dLat / 2) +
+      cos(_toRadians(lat1)) *
+          cos(_toRadians(lat2)) *
+          sin(dLon / 2) *
+          sin(dLon / 2);
+  double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+  double distance = earthRadius * c; // distance in meters
+  Logger().i(distance);
+  return distance <= radius;
+}
+
+double _toRadians(double degrees) {
+  return degrees * pi / 180;
 }
 
 class PeopleMap extends StatefulWidget {
@@ -64,6 +110,7 @@ class _PeopleMapState extends State<PeopleMap> {
   //small test
   Future<void> init() async {
     await getLocations();
+
     setState(() {
       isLoading = false;
     });
@@ -154,7 +201,7 @@ class _PeopleMapState extends State<PeopleMap> {
     try {
       // Uint8List imageData = await getMarker();
       var location = await _locationTracker.getLocation();
-
+      Logger().i("location$location");
       updateMarkerAndCircle(location);
 
       final locData = await Location().getLocation();
@@ -192,11 +239,30 @@ class _PeopleMapState extends State<PeopleMap> {
       callbackDispatcher,
       isInDebugMode: true,
     );
+    checkForGeofence();
+  }
 
+  void checkForGeofence() {
+    String jsonString;
+    Map<String, dynamic> myMap = {
+      'latitude': [],
+      'longitude': [],
+      'radius': []
+    };
+    for (var loc in locations) {
+      double latitude = loc.latitude;
+      double longitude = loc.longitude;
+
+      myMap['latitude'].add(loc.latitude);
+      myMap['longitude'].add(loc.longitude);
+      myMap['radius'].add(loc.radius);
+    }
+    jsonString = json.encode(myMap);
     Workmanager().registerPeriodicTask(
       "1",
       fetchBackground,
       frequency: Duration(minutes: 1),
+      inputData: {'json': jsonString},
     );
   }
 
@@ -248,7 +314,10 @@ class _PeopleMapState extends State<PeopleMap> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Logger().i("persing");
+          Workmanager().registerOneOffTask(
+            "2",
+            fetchBackground,
+          );
         },
         child: const Icon(Icons.location_searching),
       ),

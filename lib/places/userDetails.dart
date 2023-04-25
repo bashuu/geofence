@@ -124,29 +124,31 @@ class _UserDetailsState extends State<UserDetails> {
               ),
             ),
           ),
-          ListTile(
-            leading: const Icon(
-              Icons.login_rounded,
-              color: Colors.brightOrange,
-            ),
-            title: const Expanded(
-              child: Text(
-                'Ирхэд мэдэгдэл авах',
-                style: TextStyle(fontSize: 16),
+          Row(
+            children: <Widget>[
+              const Icon(
+                Icons.login_rounded,
+                color: Colors.brightOrange,
               ),
-            ),
-            trailing: Switch(
-              // This bool value toggles the switch.
-              value: notificationEnter,
-              activeColor: Colors.brightOrange,
-              activeTrackColor: Colors.ligthBlack,
-              onChanged: (bool value) {
-                // This is called when the user toggles the switch.
-                setState(() {
-                  notificationEnter = value;
-                });
-              },
-            ),
+              const Expanded(
+                child: Text(
+                  'Ирхэд мэдэгдэл авах',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+              Switch(
+                // This bool value toggles the switch.
+                value: notificationEnter,
+                activeColor: Colors.brightOrange,
+                activeTrackColor: Colors.ligthBlack,
+                onChanged: (bool value) {
+                  // This is called when the user toggles the switch.
+                  setState(() {
+                    notificationEnter = value;
+                  });
+                },
+              ),
+            ],
           ),
           Padding(
             padding: const EdgeInsets.all(10),
@@ -161,29 +163,31 @@ class _UserDetailsState extends State<UserDetails> {
                   borderRadius: const BorderRadius.all(Radius.circular(4))),
             ),
           ),
-          ListTile(
-            leading: const Icon(
-              Icons.logout_outlined,
-              color: Colors.ligthBlack,
-            ),
-            title: const Expanded(
-              child: Text(
-                'Гархад мэдэгдэл авах',
-                style: TextStyle(fontSize: 16),
+          Row(
+            children: <Widget>[
+              const Icon(
+                Icons.logout_outlined,
+                color: Colors.ligthBlack,
               ),
-            ),
-            trailing: Switch(
-              // This bool value toggles the switch.
-              value: notificationLeave,
-              activeColor: Colors.brightOrange,
-              activeTrackColor: Colors.ligthBlack,
-              onChanged: (bool value) {
-                // This is called when the user toggles the switch.
-                setState(() {
-                  notificationLeave = value;
-                });
-              },
-            ),
+              const Expanded(
+                child: Text(
+                  'Гархад мэдэгдэл авах',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+              Switch(
+                // This bool value toggles the switch.
+                value: notificationLeave,
+                activeColor: Colors.brightOrange,
+                activeTrackColor: Colors.ligthBlack,
+                onChanged: (bool value) {
+                  // This is called when the user toggles the switch.
+                  setState(() {
+                    notificationLeave = value;
+                  });
+                },
+              ),
+            ],
           ),
           Center(
             child: Row(
@@ -255,18 +259,19 @@ class _UserDetailsState extends State<UserDetails> {
             child: ListView.builder(
               itemCount: locationList.length,
               itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                    leading: const Icon(
-                      Icons.location_on,
-                      color: Colors.brightOrange,
+                return Row(children: <Widget>[
+                  const Icon(
+                    Icons.location_on,
+                    color: Colors.brightOrange,
+                  ),
+                  Expanded(
+                    child: Text(
+                      locationList[index],
+                      style: const TextStyle(fontSize: 16),
                     ),
-                    title: Expanded(
-                      child: Text(
-                        locationList[index],
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    trailing: const Text("11:00"));
+                  ),
+                  const Text("11:00"),
+                ]);
               },
             ),
           ),

@@ -61,9 +61,12 @@ Future<void> getUserDetails(String id) async {
 Future<bool> login(String username, String password) async {
   getUsers();
   for (int i = 0; i < users.length; i++) {
+    Logger().i(users[i].name);
+
     if (users[i].name == username && users[i].password == password) {
       currentUser = users[i];
       token = users[i].name;
+
       return true;
     }
   }
@@ -133,7 +136,7 @@ Future<void> getAllLocationUsers(PlaceLocation curLocation) async {
       userIds.add(userId);
     }
   }
-
+  locationUser = [];
   for (String userId in userIds) {
     DocumentSnapshot userSnapshot =
         await FirebaseFirestore.instance.collection('users').doc(userId).get();
@@ -142,6 +145,7 @@ Future<void> getAllLocationUsers(PlaceLocation curLocation) async {
       Map<String, dynamic> userData =
           userSnapshot.data() as Map<String, dynamic>;
       User us = User.fromJson(userData);
+      Logger().i(us.name);
       locationUser.add(us);
     }
   }
