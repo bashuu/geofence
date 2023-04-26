@@ -3,7 +3,7 @@ import '../models/place.dart';
 import '../models/popUpModal.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../models/reference.dart';
+import '../models/globals.dart' as globals;
 import '../models/database.dart';
 
 class GeoLocation extends StatefulWidget {
@@ -31,7 +31,7 @@ class _GeoLocationState extends State<GeoLocation> {
   }
 
   Future<void> init() async {
-    await getLocations().then((value) {
+    await getLocationByUser(globals.currentUser.id).then((value) {
       setState(() {
         isLoading = false;
       });
@@ -78,7 +78,7 @@ class _GeoLocationState extends State<GeoLocation> {
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.5,
                   child: ListView.separated(
-                    itemCount: locations.length,
+                    itemCount: globals.locations.length,
                     separatorBuilder: (context, index) {
                       // add a divider between items
                       return const Divider(
@@ -103,7 +103,8 @@ class _GeoLocationState extends State<GeoLocation> {
                                             cancelButtonText: "no",
                                             onConfirmPressed: () async {
                                               await delete(
-                                                      locations[index], index)
+                                                      globals.locations[index],
+                                                      index)
                                                   .then((value) {
                                                 Navigator.of(context).pop();
                                               });
@@ -124,7 +125,7 @@ class _GeoLocationState extends State<GeoLocation> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: Text(
-                                locations[index].name,
+                                globals.locations[index].name,
                                 style: const TextStyle(fontSize: 16),
                               ),
                             ),
@@ -134,7 +135,7 @@ class _GeoLocationState extends State<GeoLocation> {
                           icon: const Icon(Icons.arrow_forward_ios_outlined),
                           onPressed: () {
                             Navigator.pushNamed(context, '/locationDetails');
-                            locationDetails = locations[index];
+                            globals.locationDetails = globals.locations[index];
                           },
                         ),
                       );

@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geofence/Register/enterChildName.dart';
 import 'package:geofence/Register/loginChild.dart';
@@ -19,17 +20,26 @@ import 'package:geofence/settings/locationHistory.dart';
 import 'package:geofence/settings/notificationList.dart';
 import 'package:geofence/settings/settings.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../places/notification.dart' as notif;
 import 'package:logger/logger.dart';
+
+Future<void> _backgroundMessagingHandler(RemoteMessage message) async {
+  notif.Notification notification =
+      notif.Notification(flutterLocalNotificationsPlugin);
+  notification.flutterLocalNotificationsPlugin =
+      flutterLocalNotificationsPlugin;
+  notification.showNotificationWMessage(
+      message.notification?.title ?? "", message.notification?.body ?? "");
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
+  await FirebaseMessaging.instance.getInitialMessage();
+  FirebaseMessaging.onBackgroundMessage(_backgroundMessagingHandler);
   if (await Permission.location.isDenied) {
     Permission.location.request();
-  }
-
-  if (await Permission.locationAlways.isDenied) {
+  } else if (await Permission.locationAlways.isDenied) {
     Permission.location.request();
   }
 

@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -12,11 +13,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:logger/logger.dart';
 import 'package:workmanager/workmanager.dart';
-
-import '../models/reference.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/globals.dart' as globals;
 import '../models/database.dart';
 import '../places/notification.dart' as notif;
 import 'dart:math';
+import 'package:http/http.dart' as http;
 
 const fetchBackground = "fetchBackground";
 late List<PlaceLocation> currentListLoc;
@@ -27,40 +29,85 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     'vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    // Logger().i("inputdata" + inputData.toString());
+    String userId = await getCredentials();
+    String jsonString = await getJsonLocation();
+    Map<String, dynamic> jsonMap = jsonDecode(jsonString);
+    await getLocationByUser(userId);
 
     switch (task) {
       case fetchBackground:
         Position userLocation = await Geolocator.getCurrentPosition();
-
-        if (inputData == null) break;
-        String json = inputData!['json'];
-        Map<String, dynamic> jsonMap = jsonDecode(json);
         List<dynamic> longitudeList = jsonMap['longitude'];
         List<dynamic> latitudeList = jsonMap['latitude'];
         List<dynamic> rads = jsonMap['radius'];
 
+        // Logger().i("userLocation" + longitudeList.length.toString());
         for (int i = 0; i < longitudeList.length; i++) {
-          // Logger().i("userLocation" + Location!.toString());
           if (isUserInLocation(
               latitudeList[i],
               longitudeList[i],
               userLocation.latitude ?? 0,
               userLocation.longitude ?? 0,
               rads[i])) {
-            Logger().i("It's in");
+            // notif.Notification notification =
+            //     notif.Notification(flutterLocalNotificationsPlugin);
+            // notification.flutterLocalNotificationsPlugin =
+            //     flutterLocalNotificationsPlugin;
+            // notification.showNotificationWMessage(userId, "The user is in ");
+            await sendPushMessage(
+                "dAskIABhS2mvie62V1rOLJ:APA91bEhGnRpzxJfTpwO_s-DXBV0LckW9WGNHuLdV9CG6hMiT0RuGwv1Gk8ogmIoNN9ng7LSTFwCyCm1tsG3OV6CJzFQHbKAVkBRQiRfvwZVWl2RwYzXUO2yXGlpg-4PLcKregV6I8Yw",
+                "the user is in push notfication",
+                "at the location");
             return true;
           }
         }
-        notif.Notification notification =
-            notif.Notification(flutterLocalNotificationsPlugin);
-        notification.flutterLocalNotificationsPlugin =
-            flutterLocalNotificationsPlugin;
-        notification.showNotificationWithoutSound(userLocation);
+
         break;
     }
     return Future.value(true);
   });
+}
+
+Future<void> sendPushMessage(String token, String title, String body) async {
+  // Logger().i("Send Noti");
+  final url = Uri.parse('https://fcm.googleapis.com/fcm/send');
+  final headers = {
+    'Content-Type': 'application/json',
+    'Authorization':
+        'key=AAAA6nApToE:APA91bGgoSB0zwS8kUhtHTEpT5-kNHVz2ZWqAExFAVU49ykuXjob1BqqgarFrJ-ZetrWK8NSZaAvYVM0AtajFo3XaZ9eELkm165SGTesOfg0fB6gFp8VxzVKnbkbohV777HsP0jeEoAB',
+  };
+  final bodyJson = {
+    'to': token,
+    'priority': 'high',
+    'notification': {
+      'title': title,
+      'body': body,
+      "android_channel_id": "geofenceChannnel"
+    },
+    'data': {
+      'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+      'sound': 'default',
+      'status': 'done',
+      'title': title,
+      'body': body,
+    },
+  };
+
+  try {
+    await http.post(url, headers: headers, body: json.encode(bodyJson));
+  } catch (e) {}
+}
+
+Future<String> getCredentials() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String userid = prefs.getString('userid') ?? '';
+  return userid;
+}
+
+Future<String> getJsonLocation() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String userid = prefs.getString('jsonLocation') ?? '';
+  return userid;
 }
 
 bool isUserInLocation(
@@ -85,7 +132,6 @@ double _toRadians(double degrees) {
 
 class PeopleMap extends StatefulWidget {
   const PeopleMap({super.key});
-  static const fetchBackground = "fetchBackground";
   @override
   State<PeopleMap> createState() => _PeopleMapState();
 }
@@ -109,12 +155,15 @@ class _PeopleMapState extends State<PeopleMap> {
 
   //small test
   Future<void> init() async {
-    await getLocations();
-
+    String userId = await getCredentials();
+    String jsonString = await getJsonLocation();
+    await getLocationByUser(userId).then((value) {
+      // Logger().e(jsonString);
+      initLocations();
+    });
     setState(() {
       isLoading = false;
     });
-    initLocations();
 
     marker = const Marker(
       markerId: MarkerId("Home"),
@@ -132,7 +181,7 @@ class _PeopleMapState extends State<PeopleMap> {
   }
 
   void initLocations() {
-    for (var element in locations) {
+    for (var element in globals.locations) {
       markerList.add(
         Marker(
           markerId: MarkerId("Location${element.id}"),
@@ -201,9 +250,8 @@ class _PeopleMapState extends State<PeopleMap> {
     try {
       // Uint8List imageData = await getMarker();
       var location = await _locationTracker.getLocation();
-      Logger().i("location$location");
+      // Logger().i("location$location");
       updateMarkerAndCircle(location);
-
       final locData = await Location().getLocation();
       _controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
           bearing: 192.8334901395799,
@@ -242,27 +290,11 @@ class _PeopleMapState extends State<PeopleMap> {
     checkForGeofence();
   }
 
-  void checkForGeofence() {
-    String jsonString;
-    Map<String, dynamic> myMap = {
-      'latitude': [],
-      'longitude': [],
-      'radius': []
-    };
-    for (var loc in locations) {
-      double latitude = loc.latitude;
-      double longitude = loc.longitude;
-
-      myMap['latitude'].add(loc.latitude);
-      myMap['longitude'].add(loc.longitude);
-      myMap['radius'].add(loc.radius);
-    }
-    jsonString = json.encode(myMap);
+  void checkForGeofence() async {
     Workmanager().registerPeriodicTask(
       "1",
       fetchBackground,
-      frequency: Duration(minutes: 1),
-      inputData: {'json': jsonString},
+      frequency: const Duration(minutes: 15),
     );
   }
 
@@ -314,10 +346,30 @@ class _PeopleMapState extends State<PeopleMap> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          // String jsonString;
+          // Map<String, dynamic> myMap = {
+          //   'latitude': [],
+          //   'longitude': [],
+          //   'radius': []
+          // };
+          // Logger().i(globals.locations.length.toString());
+          // for (var loc in globals.locations) {
+          //   double latitude = loc.latitude;
+          //   double longitude = loc.longitude;
+
+          //   myMap['latitude'].add(loc.latitude);
+          //   myMap['longitude'].add(loc.longitude);
+          //   myMap['radius'].add(loc.radius);
+          // }
+          // jsonString = json.encode(myMap);
           Workmanager().registerOneOffTask(
             "2",
             fetchBackground,
           );
+          // sendPushMessage(
+          //     "dAskIABhS2mvie62V1rOLJ:APA91bEhGnRpzxJfTpwO_s-DXBV0LckW9WGNHuLdV9CG6hMiT0RuGwv1Gk8ogmIoNN9ng7LSTFwCyCm1tsG3OV6CJzFQHbKAVkBRQiRfvwZVWl2RwYzXUO2yXGlpg-4PLcKregV6I8Yw",
+          //     "button test",
+          //     "hello");
         },
         child: const Icon(Icons.location_searching),
       ),

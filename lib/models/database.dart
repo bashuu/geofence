@@ -1,14 +1,17 @@
-import 'package:geofence/models/reference.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:geofence/models/device.dart';
+import 'package:geofence/models/globals.dart' as globals;
+import 'package:geofence/models/notificationModel.dart';
 import 'package:geofence/models/user.dart';
-import 'package:logger/logger.dart';
 import 'dart:convert';
+import '../firebase_options.dart';
 import 'place.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> getLocations() async {
-  locations = [];
-
+  var locations = [];
   await FirebaseFirestore.instance
       .collection('locations')
       .get()
@@ -17,6 +20,22 @@ Future<void> getLocations() async {
       locations.add(PlaceLocation.fromJson(doc.data()));
     }
   }).catchError((error) {});
+}
+
+Future<void> getLocationByUser(String id) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  globals.locations = [];
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FirebaseFirestore.instance
+      .collection('locations')
+      .where('userId', isEqualTo: id)
+      .get()
+      .then((querySnapshot) {
+    for (var doc in querySnapshot.docs) {
+      globals.locations.add(PlaceLocation.fromJson(doc.data()));
+    }
+  }).catchError((error) {});
+  await prefs.setString('jsonLocation', encodeString());
 }
 
 Future<void> addLocations(PlaceLocation newLocation) async {
@@ -45,7 +64,7 @@ Future<void> getUsers() async {
       .get()
       .then((querySnapshot) {
     for (var doc in querySnapshot.docs) {
-      users.add(User.fromJson(doc.data()));
+      globals.users.add(User.fromJson(doc.data()));
     }
   }).catchError((error) {});
 }
@@ -59,13 +78,16 @@ Future<void> getUserDetails(String id) async {
 }
 
 Future<bool> login(String username, String password) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
   getUsers();
-  for (int i = 0; i < users.length; i++) {
-    Logger().i(users[i].name);
-
-    if (users[i].name == username && users[i].password == password) {
-      currentUser = users[i];
-      token = users[i].name;
+  for (int i = 0; i < globals.users.length; i++) {
+    if (globals.users[i].name == username &&
+        globals.users[i].password == password) {
+      globals.currentUser = globals.users[i];
+      globals.token = globals.users[i].name;
+      await prefs.setString('token', globals.currentUser.name);
+      await prefs.setString('userid', globals.currentUser.id);
+      getLocationByUser(globals.currentUser.id);
 
       return true;
     }
@@ -73,9 +95,23 @@ Future<bool> login(String username, String password) async {
   return false;
 }
 
+String encodeString() {
+  String jsonString;
+  Map<String, dynamic> myMap = {'latitude': [], 'longitude': [], 'radius': []};
+  for (var loc in globals.locations) {
+    double latitude = loc.latitude;
+    double longitude = loc.longitude;
+
+    myMap['latitude'].add(loc.latitude);
+    myMap['longitude'].add(loc.longitude);
+    myMap['radius'].add(loc.radius);
+  }
+  return json.encode(myMap);
+}
+
 Future<bool> register(User user) async {
   getUsers();
-  for (int i = 0; i < users.length; i++) {
+  for (int i = 0; i < globals.users.length; i++) {
     if (user.name == user.name) {
       return false;
     }
@@ -86,7 +122,7 @@ Future<bool> register(User user) async {
   if (user.parent_id == "0") {
     user.parent_id == user.id;
   } else {
-    user.parent_id = currentUser.id;
+    user.parent_id = globals.currentUser.id;
   }
   await docUser.set(json).then((value) async {
     getUsers();
@@ -97,7 +133,7 @@ Future<bool> register(User user) async {
 Future<void> addUserLocation(PlaceLocation newLocation) async {
   final doc = FirebaseFirestore.instance.collection('user_location').doc();
   String id = doc.id;
-  String user_id = currentUser.id;
+  String user_id = globals.currentUser.id;
   String location_id = newLocation.id;
   var data = {
     "id": doc.id,
@@ -136,7 +172,7 @@ Future<void> getAllLocationUsers(PlaceLocation curLocation) async {
       userIds.add(userId);
     }
   }
-  locationUser = [];
+  globals.locationUser = [];
   for (String userId in userIds) {
     DocumentSnapshot userSnapshot =
         await FirebaseFirestore.instance.collection('users').doc(userId).get();
@@ -145,9 +181,56 @@ Future<void> getAllLocationUsers(PlaceLocation curLocation) async {
       Map<String, dynamic> userData =
           userSnapshot.data() as Map<String, dynamic>;
       User us = User.fromJson(userData);
-      Logger().i(us.name);
-      locationUser.add(us);
+      globals.locationUser.add(us);
     }
+  }
+}
+
+Future<void> getUserNotification(String id) async {
+  final doc = FirebaseFirestore.instance
+      .collection('notification')
+      .where("user_id", isEqualTo: id)
+      .get()
+      .then((querySnapshot) {
+    for (var doc in querySnapshot.docs) {
+      globals.userNotifications.add(NotificationModel.fromJson(doc.data()));
+    }
+  });
+}
+
+Future<void> addUserNotification(NotificationModel noti) async {
+  final docNotification =
+      FirebaseFirestore.instance.collection('notification').doc();
+  noti.id = docNotification.id;
+  final json = noti.toJson();
+  await docNotification.set(json).then((value) async {});
+}
+
+Future<void> getUserDeviceList(String id) async {
+  final doc = FirebaseFirestore.instance
+      .collection('devices')
+      .where("user_id", isEqualTo: id)
+      .get()
+      .then((querySnapshot) {
+    for (var doc in querySnapshot.docs) {
+      globals.userDevices.add(DeviceModel.fromJson(doc.data()));
+    }
+  });
+}
+
+Future<void> addUserDevice(DeviceModel device) async {
+  final QuerySnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+      .instance
+      .collection('devices')
+      .where('token', isEqualTo: device.token)
+      .get();
+  if (snapshot.size == 0) {
+    final docDevices = FirebaseFirestore.instance.collection('devices').doc();
+    device.id = docDevices.id;
+    final json = device.toJson();
+    await docDevices.set(json);
+  } else {
+    print('Token already exists in database');
   }
 }
 

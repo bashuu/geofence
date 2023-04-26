@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import '../models/database.dart';
-import '../models/reference.dart';
+import '../models/globals.dart' as globals;
 import '../models/user.dart';
 
 class LocationDetails extends StatefulWidget {
@@ -41,8 +41,8 @@ class _LocationDetailsState extends State<LocationDetails> {
   }
 
   Future<void> getUser() async {
-    await getAllLocationUsers(locationDetails).then((value) {
-      Logger().e(locationUser.length);
+    await getAllLocationUsers(globals.locationDetails).then((value) {
+      Logger().e(globals.locationUser.length);
     });
   }
 
@@ -61,7 +61,7 @@ class _LocationDetailsState extends State<LocationDetails> {
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            locationDetails.name,
+            globals.locationDetails.name,
             style: const TextStyle(
               color: Colors.ligthBlack,
             ),
@@ -147,7 +147,7 @@ class _LocationDetailsState extends State<LocationDetails> {
                       width: 20,
                     ),
                     Text(
-                      locationDetails.address,
+                      globals.locationDetails.address,
                       style: const TextStyle(fontSize: 20),
                     )
                   ],
@@ -187,7 +187,7 @@ class _LocationDetailsState extends State<LocationDetails> {
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ListView.separated(
-                        itemCount: locationUser.length,
+                        itemCount: globals.locationUser.length,
                         separatorBuilder: (context, index) {
                           // add a divider between items
                           return const Divider(
@@ -214,7 +214,7 @@ class _LocationDetailsState extends State<LocationDetails> {
                               ),
                               Container(
                                 child: Text(
-                                  locationUser[index].name,
+                                  globals.locationUser[index].name,
                                   style: const TextStyle(fontSize: 16),
                                 ),
                               ),
@@ -307,7 +307,7 @@ class _LocationDetailsState extends State<LocationDetails> {
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ListView.separated(
-                        itemCount: locationUser.length,
+                        itemCount: globals.locationUser.length,
                         separatorBuilder: (context, index) {
                           // add a divider between items
                           return const Divider(
@@ -318,7 +318,7 @@ class _LocationDetailsState extends State<LocationDetails> {
                         itemBuilder: (BuildContext context, int index) {
                           return Container(
                             child: Text(
-                              locationUser[index].name,
+                              globals.locationUser[index].name,
                               style: const TextStyle(fontSize: 16),
                             ),
                           );

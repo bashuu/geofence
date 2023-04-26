@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geofence/models/globals.dart' as globals;
 
 import '../models/place.dart';
 import '../models/database.dart';
@@ -50,7 +51,7 @@ class CchooseLocationState extends State<AddLocation> {
         longitude: _center!.longitude,
         radius: _radius,
         address: "Khan uul",
-        userId: "1",
+        userId: globals.currentUser.id,
         id: "0");
 
     await addLocations(newLocation);

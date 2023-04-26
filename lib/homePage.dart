@@ -1,7 +1,19 @@
+import 'dart:io';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geofence/geofence/peopleMap.dart';
+import 'package:geofence/models/device.dart';
 import 'package:geofence/places/geoLocation.dart';
 import 'package:geofence/settings/settings.dart';
+import 'package:geofence/models/globals.dart' as globals;
+import 'package:logger/logger.dart';
+import '../places/notification.dart' as notif;
+
+import 'package:device_info/device_info.dart';
+
+import 'models/database.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -33,6 +45,71 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    requestPermission();
+    getToken();
+    initInfo();
+  }
+
+  void requestPermission() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      print('User granted provisional permission');
+    } else {
+      print('User declined permission');
+    }
+  }
+
+  void getToken() async {
+    await FirebaseMessaging.instance.getToken().then((value) {
+      setState(() {
+        globals.deviceToken = value;
+        saveToken(value);
+      });
+    });
+  }
+
+  void saveToken(String? token) async {
+    String deviceName = " ";
+    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    if (Platform.isAndroid) {
+      final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      deviceName = androidInfo.model;
+      print('Running on ${androidInfo.model}');
+    } else if (Platform.isIOS) {
+      final IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      deviceName = iosInfo.utsname.machine;
+      print('Running on ${iosInfo.utsname.machine}');
+    }
+    DeviceModel newDevice = DeviceModel(
+        name: deviceName,
+        created_at: DateTime.now(),
+        user_id: globals.currentUser.id,
+        token: token ?? " ",
+        id: "");
+    addUserDevice(newDevice);
+  }
+
+  void initInfo() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      notif.Notification notification =
+          notif.Notification(flutterLocalNotificationsPlugin);
+      notification.flutterLocalNotificationsPlugin =
+          flutterLocalNotificationsPlugin;
+      notification.showNotificationWMessage(
+          message.notification?.title ?? "", message.notification?.body ?? "");
+    });
   }
 
   Color _getBgColor(int index) =>

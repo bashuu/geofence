@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
-import 'package:geofence/models/reference.dart';
+import 'package:geofence/models/globals.dart' as globals;
 import 'package:logger/logger.dart';
 import '../models/database.dart';
 
@@ -15,7 +15,15 @@ class LoginParent extends StatefulWidget {
 class _LoginParentState extends State<LoginParent> {
   TextEditingController username = TextEditingController();
   TextEditingController passwordCont = TextEditingController();
+  late Future<String> token;
+
   bool _showWarning = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     bool ispasswordev = true;
@@ -204,9 +212,10 @@ class _LoginParentState extends State<LoginParent> {
                           return;
                           // throw Exception("No name");
                         }
+
                         await login(username.text, passwordCont.text)
                             .then((value) {
-                          if (token == username.text) {
+                          if (globals.token == username.text) {
                             Navigator.pushNamed(context, "/homePage");
                           }
                         });

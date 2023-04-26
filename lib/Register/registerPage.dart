@@ -1,6 +1,6 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
-import 'package:geofence/models/reference.dart';
+import 'package:geofence/models/globals.dart';
 import 'package:geofence/models/user.dart';
 import 'package:location/location.dart';
 import 'package:logger/logger.dart';
