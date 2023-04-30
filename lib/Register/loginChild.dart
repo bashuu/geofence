@@ -1,4 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:geofence/geofence/peopleMap.dart';
+import 'package:logger/logger.dart';
+import 'package:otp/otp.dart';
+import 'package:http/http.dart' as http;
+import '../models/globals.dart' as globals;
+
+import '../models/database.dart';
 
 class LoginChildPage extends StatefulWidget {
   const LoginChildPage({super.key});
@@ -7,10 +16,56 @@ class LoginChildPage extends StatefulWidget {
   State<LoginChildPage> createState() => _LoginChildPageState();
 }
 
+Future<void> sendPushMessage(String token, String title, String body) async {
+  // Logger().i("Send Noti");
+  final url = Uri.parse('https://fcm.googleapis.com/fcm/send');
+  final headers = {
+    'Content-Type': 'application/json',
+    'Authorization':
+        'key=AAAA6nApToE:APA91bGgoSB0zwS8kUhtHTEpT5-kNHVz2ZWqAExFAVU49ykuXjob1BqqgarFrJ-ZetrWK8NSZaAvYVM0AtajFo3XaZ9eELkm165SGTesOfg0fB6gFp8VxzVKnbkbohV777HsP0jeEoAB',
+  };
+  final bodyJson = {
+    'to': token,
+    'priority': 'high',
+    'notification': {
+      'title': title,
+      'body': body,
+      "android_channel_id": "geofenceChannnel"
+    },
+    'data': {
+      'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+      'sound': 'default',
+      'status': 'done',
+      'title': title,
+      'body': body,
+    },
+  };
+
+  try {
+    await http.post(url, headers: headers, body: json.encode(bodyJson));
+  } catch (e) {}
+}
+
 class _LoginChildPageState extends State<LoginChildPage> {
+  TextEditingController username = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    TextEditingController emailCont = TextEditingController();
+    String name = "";
+
+    void generateOTPCode() async {
+      await sendOTPCode(username.text);
+      Logger().e("userid " + globals.sentId);
+      await getUserDeviceList(globals.sentId).then((value) {
+        for (int i = 0; i < globals.userDevices.length; i++) {
+          sendPushMessage(
+              globals.userDevices[i].token, "OTP message", globals.otpCode);
+          Logger().e(globals.otpCode);
+        }
+        if (globals.userDevices.isNotEmpty) {
+          Navigator.pushNamed(context, '/otpPage');
+        }
+      });
+    }
 
     return GestureDetector(
         onTap: () {
@@ -67,14 +122,14 @@ class _LoginChildPageState extends State<LoginChildPage> {
                           borderRadius:
                               const BorderRadius.all(Radius.circular(15))),
                       child: TextField(
-                        controller: emailCont,
-                        keyboardType: TextInputType.emailAddress,
+                        controller: username,
+                        keyboardType: TextInputType.name,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(
-                            Icons.email_outlined,
+                            Icons.person_outline,
                             size: 20,
                           ),
-                          hintText: 'И-Мэйл',
+                          hintText: 'Хэрэглэгчийн нэр',
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
                               color: Colors.transparent,
@@ -93,7 +148,7 @@ class _LoginChildPageState extends State<LoginChildPage> {
                     height: 40,
                   ),
                   const Text(
-                    "Оруулсан мэйл хаяг руу OTP (нэг удаагийн код) илгээнэ.",
+                    "Хэрэглэгч рүү  OTP (нэг удаагийн код) илгээнэ. ",
                     style: TextStyle(
                       color: Colors.ligthBlack,
                     ),
@@ -122,7 +177,7 @@ class _LoginChildPageState extends State<LoginChildPage> {
                             const BorderRadius.all(Radius.circular(15))),
                     child: TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/otpPage');
+                        generateOTPCode();
                       },
                       style: ButtonStyle(
                         backgroundColor: MaterialStateProperty.all<Color>(

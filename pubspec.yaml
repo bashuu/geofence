@@ -49,6 +49,7 @@ dependencies:
     firebase_messaging: ^14.4.1
     device_info: ^2.0.3
     http: ^0.13.5
+    otp: ^3.1.4
 
 dev_dependencies:
     flutter_test:

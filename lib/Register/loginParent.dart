@@ -83,10 +83,10 @@ class _LoginParentState extends State<LoginParent> {
                           borderRadius: BorderRadius.all(Radius.circular(15))),
                       child: TextField(
                         controller: username,
-                        keyboardType: TextInputType.emailAddress,
+                        keyboardType: TextInputType.name,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(
-                            Icons.email_outlined,
+                            Icons.person_outline,
                             size: 20,
                           ),
                           hintText: 'Хэрэглэгчийн нэр',

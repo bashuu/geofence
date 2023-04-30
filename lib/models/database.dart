@@ -3,6 +3,8 @@ import 'package:geofence/models/device.dart';
 import 'package:geofence/models/globals.dart' as globals;
 import 'package:geofence/models/notificationModel.dart';
 import 'package:geofence/models/user.dart';
+import 'package:logger/logger.dart';
+import 'package:otp/otp.dart';
 import 'dart:convert';
 import '../firebase_options.dart';
 import 'place.dart';
@@ -85,6 +87,7 @@ Future<bool> login(String username, String password) async {
         globals.users[i].password == password) {
       globals.currentUser = globals.users[i];
       globals.token = globals.users[i].name;
+      globals.currentUser = globals.users[i];
       await prefs.setString('token', globals.currentUser.name);
       await prefs.setString('userid', globals.currentUser.id);
       getLocationByUser(globals.currentUser.id);
@@ -97,7 +100,12 @@ Future<bool> login(String username, String password) async {
 
 String encodeString() {
   String jsonString;
-  Map<String, dynamic> myMap = {'latitude': [], 'longitude': [], 'radius': []};
+  Map<String, dynamic> myMap = {
+    'latitude': [],
+    'longitude': [],
+    'radius': [],
+    'id': []
+  };
   for (var loc in globals.locations) {
     double latitude = loc.latitude;
     double longitude = loc.longitude;
@@ -105,28 +113,30 @@ String encodeString() {
     myMap['latitude'].add(loc.latitude);
     myMap['longitude'].add(loc.longitude);
     myMap['radius'].add(loc.radius);
+    myMap['id'].add(loc.id);
   }
   return json.encode(myMap);
 }
 
 Future<bool> register(User user) async {
-  getUsers();
-  for (int i = 0; i < globals.users.length; i++) {
-    if (user.name == user.name) {
+  final QuerySnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+      .instance
+      .collection('users')
+      .where('name', isEqualTo: user.name)
+      .get();
+  if (snapshot.size == 0) {
+    final docDevices = FirebaseFirestore.instance.collection('users').doc();
+    user.id = docDevices.id;
+    final json = user.toJson();
+    try {
+      await docDevices.set(json);
+      globals.currentUser = user;
+    } catch (e) {
       return false;
     }
-  }
-  final docUser = FirebaseFirestore.instance.collection('users').doc();
-  user.id = docUser.id;
-  final json = user.toJson();
-  if (user.parent_id == "0") {
-    user.parent_id == user.id;
   } else {
-    user.parent_id = globals.currentUser.id;
+    print('Token already exists in database');
   }
-  await docUser.set(json).then((value) async {
-    getUsers();
-  });
   return true;
 }
 
@@ -207,7 +217,8 @@ Future<void> addUserNotification(NotificationModel noti) async {
 }
 
 Future<void> getUserDeviceList(String id) async {
-  final doc = FirebaseFirestore.instance
+  globals.userDevices = [];
+  await FirebaseFirestore.instance
       .collection('devices')
       .where("user_id", isEqualTo: id)
       .get()
@@ -229,6 +240,40 @@ Future<void> addUserDevice(DeviceModel device) async {
     device.id = docDevices.id;
     final json = device.toJson();
     await docDevices.set(json);
+  } else {
+    print('Token already exists in database');
+  }
+}
+
+Future<void> deleteUserDevice(String id) async {
+  String deviceId = id;
+  final doc = FirebaseFirestore.instance
+      .collection('devices')
+      .where("id", isEqualTo: deviceId)
+      .get()
+      .then((querySnapshot) {
+    querySnapshot.docs.forEach((doc) {
+      doc.reference.delete();
+    });
+  }).catchError((error) {});
+}
+
+Future<void> sendOTPCode(String name) async {
+  final QuerySnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+      .instance
+      .collection('users')
+      .where('name', isEqualTo: name)
+      .get();
+
+  if (snapshot.size != 0) {
+    final String documentId = snapshot.docs[0].id;
+    final code = OTP.generateTOTPCodeString(
+        documentId, DateTime.now().millisecondsSinceEpoch);
+    globals.otpCode = code;
+    globals.sentId = documentId;
+    await FirebaseFirestore.instance.collection("UserOtp").doc(documentId).set({
+      'otp': code,
+    });
   } else {
     print('Token already exists in database');
   }

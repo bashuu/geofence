@@ -17,7 +17,8 @@ class DeviceModel {
   factory DeviceModel.fromJson(Map<String, dynamic> json) {
     return DeviceModel(
       name: json['name'],
-      created_at: json['created_at'],
+      created_at: DateTime.fromMillisecondsSinceEpoch(
+          json['created_at'].millisecondsSinceEpoch),
       token: json['token'],
       user_id: json['user_id'],
       id: json['id'],

@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:location/location.dart';
+import 'package:geofence/models/globals.dart' as globals;
+
+import '../models/database.dart';
+import '../models/user.dart';
 
 class EnterChildName extends StatefulWidget {
   const EnterChildName({super.key});
@@ -8,10 +13,49 @@ class EnterChildName extends StatefulWidget {
 }
 
 class _EnterChildNameState extends State<EnterChildName> {
+  TextEditingController username = TextEditingController();
+  TextEditingController passwordCont = TextEditingController();
+  TextEditingController repeatPassCont = TextEditingController();
+  bool _showWarning = false;
+  final Location _locationTracker = Location();
+  Future<void> registerUser() async {
+    if (username.text.isEmpty) {
+      setState(() {
+        _showWarning = true;
+      });
+      // throw Exception("No name");
+    }
+
+    // ignore: unrelated_type_equality_checks
+    if (passwordCont.text != repeatPassCont) {
+      setState(() {
+        _showWarning = true;
+      });
+      // throw Exception("Password doesnot match");
+    }
+    _showWarning = false;
+    User newUser = User(
+        name: username.text,
+        latitude: 0,
+        longitude: 0,
+        password: passwordCont.text,
+        id: "0",
+        parent_id: globals.sentId);
+
+    if (await register(newUser)) {
+      await login(username.text, passwordCont.text).then((value) {
+        globals.token = globals.currentUser.name;
+        if (globals.token != "") {
+          Navigator.pushNamed(context, '/homePage');
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    TextEditingController emailCont = TextEditingController();
-
+    bool _showWarning = false;
+    bool ispasswordev = true;
     return GestureDetector(
         onTap: () {
           FocusScopeNode currentFocus = FocusScope.of(context);
@@ -67,8 +111,8 @@ class _EnterChildNameState extends State<EnterChildName> {
                           borderRadius:
                               const BorderRadius.all(Radius.circular(15))),
                       child: TextField(
-                        controller: emailCont,
-                        keyboardType: TextInputType.emailAddress,
+                        controller: username,
+                        keyboardType: TextInputType.name,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(
                             Icons.person,
@@ -89,20 +133,133 @@ class _EnterChildNameState extends State<EnterChildName> {
                       ),
                     ),
                   ),
-                  const SizedBox(
-                    height: 40,
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.05,
                   ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 40, right: 40),
-                    child: Text(
-                      "exmaple@mail.com мэйл-руу илгээсэн нэг удаагын баталгаажуулах кодыг энд оруулна уу.",
-                      style: TextStyle(
-                        color: Colors.ligthBlack,
+                  Center(
+                    child: Container(
+                      height: 60.0,
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      decoration: BoxDecoration(
+                          color: Colors.darkerWhite,
+                          border: Border.all(
+                            color: Colors.darkerWhite,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: const Offset(
+                                  0, 3), // changes position of shadow
+                            ),
+                          ],
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(15))),
+                      child: TextField(
+                        controller: passwordCont,
+                        keyboardType: TextInputType.visiblePassword,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.lock_open_outlined,
+                            size: 20,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: ispasswordev
+                                ? const Icon(
+                                    Icons.visibility_off,
+                                    color: Colors.ligthBlack,
+                                    size: 20,
+                                  )
+                                // ignore: dead_code
+                                : const Icon(
+                                    Icons.visibility,
+                                    color: Colors.ligthBlack,
+                                    size: 20,
+                                  ),
+                            onPressed: () =>
+                                setState(() => ispasswordev = !ispasswordev),
+                          ),
+                          hintText: 'Нууц үг',
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                        ),
+                        obscureText: ispasswordev,
                       ),
                     ),
                   ),
                   SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.5,
+                    height: MediaQuery.of(context).size.height * 0.05,
+                  ),
+                  Center(
+                    child: Container(
+                      height: 60.0,
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      decoration: BoxDecoration(
+                          color: Colors.darkerWhite,
+                          border: Border.all(
+                            color: Colors.darkerWhite,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: const Offset(
+                                  0, 3), // changes position of shadow
+                            ),
+                          ],
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(15))),
+                      child: TextField(
+                        controller: repeatPassCont,
+                        keyboardType: TextInputType.visiblePassword,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.lock_open_outlined,
+                            size: 20,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: ispasswordev
+                                ? const Icon(
+                                    Icons.visibility_off,
+                                    color: Colors.ligthBlack,
+                                    size: 20,
+                                  )
+                                : const Icon(
+                                    Icons.visibility,
+                                    color: Colors.ligthBlack,
+                                    size: 20,
+                                  ),
+                            onPressed: () =>
+                                setState(() => ispasswordev = !ispasswordev),
+                          ),
+                          hintText: 'Нууц үг давтах',
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                        ),
+                        obscureText: ispasswordev,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.18,
                   ),
                   Container(
                     height: 60.0,
@@ -125,7 +282,7 @@ class _EnterChildNameState extends State<EnterChildName> {
                             const BorderRadius.all(Radius.circular(15))),
                     child: TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/homePage');
+                        registerUser();
                       },
                       style: ButtonStyle(
                         backgroundColor: MaterialStateProperty.all<Color>(

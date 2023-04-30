@@ -1,6 +1,7 @@
 // ignore_for_file: file_names
 
 import 'package:flutter/material.dart';
+import 'package:geofence/models/globals.dart' as globals;
 
 class OtpPage extends StatefulWidget {
   const OtpPage({super.key});
@@ -10,9 +11,13 @@ class OtpPage extends StatefulWidget {
 }
 
 class _OtpPageState extends State<OtpPage> {
+  TextEditingController emailCont = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    TextEditingController emailCont = TextEditingController();
+    bool checkOTPCode() {
+      if (globals.otpCode == emailCont.text) return true;
+      return false;
+    }
 
     return GestureDetector(
         onTap: () {
@@ -70,7 +75,7 @@ class _OtpPageState extends State<OtpPage> {
                               const BorderRadius.all(Radius.circular(15))),
                       child: TextField(
                         controller: emailCont,
-                        keyboardType: TextInputType.emailAddress,
+                        keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(
                             Icons.key_outlined,
@@ -97,7 +102,7 @@ class _OtpPageState extends State<OtpPage> {
                   const Padding(
                     padding: EdgeInsets.only(left: 40, right: 40),
                     child: Text(
-                      "exmaple@mail.com мэйл-руу илгээсэн нэг удаагын баталгаажуулах кодыг энд оруулна уу.",
+                      "Илгээсэн нэг удаагийн баталгаажуулах кодыг энд оруулна уу",
                       style: TextStyle(
                         color: Colors.ligthBlack,
                       ),
@@ -127,7 +132,9 @@ class _OtpPageState extends State<OtpPage> {
                             const BorderRadius.all(Radius.circular(15))),
                     child: TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/enterChildName');
+                        if (checkOTPCode()) {
+                          Navigator.pushNamed(context, '/enterChildName');
+                        }
                       },
                       style: ButtonStyle(
                         backgroundColor: MaterialStateProperty.all<Color>(

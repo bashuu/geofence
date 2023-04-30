@@ -19,6 +19,7 @@ import 'package:geofence/settings/deviceList.dart';
 import 'package:geofence/settings/locationHistory.dart';
 import 'package:geofence/settings/notificationList.dart';
 import 'package:geofence/settings/settings.dart';
+import 'package:location/location.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../places/notification.dart' as notif;
 import 'package:logger/logger.dart';
@@ -34,13 +35,17 @@ Future<void> _backgroundMessagingHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Location location = Location();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseMessaging.instance.getInitialMessage();
   FirebaseMessaging.onBackgroundMessage(_backgroundMessagingHandler);
+  bool enabled = await location.serviceEnabled();
   if (await Permission.location.isDenied) {
     Permission.location.request();
   } else if (await Permission.locationAlways.isDenied) {
     Permission.location.request();
+  } else if (!enabled) {
+    enabled = await location.requestService();
   }
 
   runApp(const MyApp());

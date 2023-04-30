@@ -1,6 +1,6 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
-import 'package:geofence/models/globals.dart';
+import 'package:geofence/models/globals.dart' as globals;
 import 'package:geofence/models/user.dart';
 import 'package:location/location.dart';
 import 'package:logger/logger.dart';
@@ -47,8 +47,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (await register(newUser)) {
       await login(username.text, passwordCont.text).then((value) {
-        token = currentUser.name;
-        if (token != "") {
+        globals.token = globals.currentUser.name;
+        if (globals.token != "") {
           Navigator.pushNamed(context, '/homePage');
         }
       });

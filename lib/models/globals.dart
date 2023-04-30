@@ -14,3 +14,5 @@ late PlaceLocation locationDetails;
 late User currentUser;
 late String token = "";
 late String? deviceToken = "";
+String otpCode = "";
+String sentId = "";
