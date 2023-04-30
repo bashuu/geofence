@@ -40,8 +40,9 @@ void callbackDispatcher() {
         List<dynamic> longitudeList = jsonMap['longitude'];
         List<dynamic> latitudeList = jsonMap['latitude'];
         List<dynamic> rads = jsonMap['radius'];
+        List<dynamic> locId = jsonMap['id'];
+        Logger().e(longitudeList.length);
 
-        // Logger().i("userLocation" + longitudeList.length.toString());
         for (int i = 0; i < longitudeList.length; i++) {
           if (isUserInLocation(
               latitudeList[i],
@@ -49,16 +50,11 @@ void callbackDispatcher() {
               userLocation.latitude ?? 0,
               userLocation.longitude ?? 0,
               rads[i])) {
-            // notif.Notification notification =
-            //     notif.Notification(flutterLocalNotificationsPlugin);
-            // notification.flutterLocalNotificationsPlugin =
-            //     flutterLocalNotificationsPlugin;
-            // notification.showNotificationWMessage(userId, "The user is in ");
-            await sendPushMessage(
-                "dAskIABhS2mvie62V1rOLJ:APA91bEhGnRpzxJfTpwO_s-DXBV0LckW9WGNHuLdV9CG6hMiT0RuGwv1Gk8ogmIoNN9ng7LSTFwCyCm1tsG3OV6CJzFQHbKAVkBRQiRfvwZVWl2RwYzXUO2yXGlpg-4PLcKregV6I8Yw",
-                "the user is in push notfication",
-                "at the location");
-            return true;
+            await sendGroupPushMessage(locId[i], "The user is in a geofence",
+                    "This is a background process")
+                .then((value) {
+              return true;
+            });
           }
         }
 
@@ -68,8 +64,15 @@ void callbackDispatcher() {
   });
 }
 
-Future<void> sendPushMessage(String token, String title, String body) async {
-  // Logger().i("Send Noti");
+Future<void> checkLocations() async {}
+
+Future<void> notifyUsers(locId) async {}
+
+Future<void> sendGroupPushMessage(
+    String token, String title, String body) async {
+  Logger().i("Send Noti");
+  Logger().e(token);
+
   final url = Uri.parse('https://fcm.googleapis.com/fcm/send');
   final headers = {
     'Content-Type': 'application/json',
@@ -77,7 +80,7 @@ Future<void> sendPushMessage(String token, String title, String body) async {
         'key=AAAA6nApToE:APA91bGgoSB0zwS8kUhtHTEpT5-kNHVz2ZWqAExFAVU49ykuXjob1BqqgarFrJ-ZetrWK8NSZaAvYVM0AtajFo3XaZ9eELkm165SGTesOfg0fB6gFp8VxzVKnbkbohV777HsP0jeEoAB',
   };
   final bodyJson = {
-    'to': token,
+    'to': "/topics/$token",
     'priority': 'high',
     'notification': {
       'title': title,
@@ -94,8 +97,14 @@ Future<void> sendPushMessage(String token, String title, String body) async {
   };
 
   try {
-    await http.post(url, headers: headers, body: json.encode(bodyJson));
-  } catch (e) {}
+    await http
+        .post(url, headers: headers, body: json.encode(bodyJson))
+        .then((value) {
+      Logger().e(value);
+    });
+  } catch (e) {
+    Logger().e(e);
+  }
 }
 
 Future<String> getCredentials() async {
@@ -138,7 +147,7 @@ class PeopleMap extends StatefulWidget {
 
 class _PeopleMapState extends State<PeopleMap> {
   late GoogleMapController _controller;
-  // late StreamSubscription _locationSub;
+  late StreamSubscription _locationSub;
   final Location _locationTracker = Location();
   bool isLoading = true;
   List<User> users = [];
@@ -178,10 +187,13 @@ class _PeopleMapState extends State<PeopleMap> {
       zIndex: 1,
       strokeColor: Colors.brightOrange,
     );
+    // getCurrentLocation();
   }
 
   void initLocations() {
     for (var element in globals.locations) {
+      FirebaseMessaging.instance.subscribeToTopic(element.id);
+
       markerList.add(
         Marker(
           markerId: MarkerId("Location${element.id}"),
@@ -252,26 +264,19 @@ class _PeopleMapState extends State<PeopleMap> {
       var location = await _locationTracker.getLocation();
       // Logger().i("location$location");
       updateMarkerAndCircle(location);
-      final locData = await Location().getLocation();
-      _controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-          bearing: 192.8334901395799,
-          target: LatLng(locData.latitude ?? 0, locData.longitude ?? 0),
-          tilt: 0,
-          zoom: 18.00)));
+      // final locData = await Location().getLocation();
+      // _controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+      //     bearing: 192.8334901395799,
+      //     target: LatLng(locData.latitude ?? 0, locData.longitude ?? 0),
+      //     tilt: 0,
+      //     zoom: 18.00)));
 
-      // _locationSub = _locationTracker.onLocationChanged
-      //     .listen((LocationData newLocalData) {
-      //   if (_controller != null) {
-      //     _controller.animateCamera(CameraUpdate.newCameraPosition(
-      //         CameraPosition(
-      //             bearing: 192.8334901395799,
-      //             target: LatLng(
-      //                 newLocalData.latitude ?? 0, newLocalData.longitude ?? 0),
-      //             tilt: 0,
-      //             zoom: 18.00)));
-      //     updateMarkerAndCircle(newLocalData);
-      //   }
-      // });
+      _locationSub = _locationTracker.onLocationChanged
+          .listen((LocationData newLocalData) {
+        if (_controller != null) {
+          updateMarkerAndCircle(newLocalData);
+        }
+      });
     } on PlatformException catch (e) {
       if (e.code == 'PERMISSION_DENIED') {
         debugPrint("Permission Denied");
@@ -346,30 +351,11 @@ class _PeopleMapState extends State<PeopleMap> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // String jsonString;
-          // Map<String, dynamic> myMap = {
-          //   'latitude': [],
-          //   'longitude': [],
-          //   'radius': []
-          // };
-          // Logger().i(globals.locations.length.toString());
-          // for (var loc in globals.locations) {
-          //   double latitude = loc.latitude;
-          //   double longitude = loc.longitude;
-
-          //   myMap['latitude'].add(loc.latitude);
-          //   myMap['longitude'].add(loc.longitude);
-          //   myMap['radius'].add(loc.radius);
-          // }
-          // jsonString = json.encode(myMap);
+          // sendGroupPushMessage("pljCyKNbPPEa6fH94rG6", "Group test", "hello");
           Workmanager().registerOneOffTask(
             "2",
             fetchBackground,
           );
-          // sendPushMessage(
-          //     "dAskIABhS2mvie62V1rOLJ:APA91bEhGnRpzxJfTpwO_s-DXBV0LckW9WGNHuLdV9CG6hMiT0RuGwv1Gk8ogmIoNN9ng7LSTFwCyCm1tsG3OV6CJzFQHbKAVkBRQiRfvwZVWl2RwYzXUO2yXGlpg-4PLcKregV6I8Yw",
-          //     "button test",
-          //     "hello");
         },
         child: const Icon(Icons.location_searching),
       ),
