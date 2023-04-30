@@ -7,6 +7,7 @@ class User {
   late String id;
   late String parent_id;
   final String password;
+  late String location_id;
 
   User(
       {required this.name,
@@ -14,7 +15,8 @@ class User {
       required this.longitude,
       required this.id,
       required this.parent_id,
-      required this.password});
+      required this.password,
+      required this.location_id});
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -23,7 +25,8 @@ class User {
         longitude: json['longitude'],
         id: json['id'],
         parent_id: json['parent_id'],
-        password: json['password']);
+        password: json['password'],
+        location_id: json['location_id']);
   }
 
   Map<String, dynamic> toJson() => {
@@ -32,6 +35,7 @@ class User {
         'longitude': longitude,
         'parent_id': parent_id,
         'id': id,
-        'password': password
+        'password': password,
+        'location_id': location_id
       };
 }

@@ -2,10 +2,12 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:geofence/models/notificationModel.dart';
 import 'package:geofence/models/place.dart';
 import 'package:geofence/models/user.dart';
 import 'package:geolocator/geolocator.dart';
@@ -27,35 +29,16 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 @pragma(
     'vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
-void callbackDispatcher() {
+void callbackDispatcher() async {
   Workmanager().executeTask((task, inputData) async {
-    String userId = await getCredentials();
-    String jsonString = await getJsonLocation();
-    Map<String, dynamic> jsonMap = jsonDecode(jsonString);
-    await getLocationByUser(userId);
-
+    await Firebase.initializeApp();
     switch (task) {
       case fetchBackground:
-        Position userLocation = await Geolocator.getCurrentPosition();
-        List<dynamic> longitudeList = jsonMap['longitude'];
-        List<dynamic> latitudeList = jsonMap['latitude'];
-        List<dynamic> rads = jsonMap['radius'];
-        List<dynamic> locId = jsonMap['id'];
-        Logger().e(longitudeList.length);
-
-        for (int i = 0; i < longitudeList.length; i++) {
-          if (isUserInLocation(
-              latitudeList[i],
-              longitudeList[i],
-              userLocation.latitude ?? 0,
-              userLocation.longitude ?? 0,
-              rads[i])) {
-            await sendGroupPushMessage(locId[i], "The user is in a geofence",
-                    "This is a background process")
-                .then((value) {
-              return true;
-            });
-          }
+        if (await checkLocations()) {
+          return Future.value(true);
+        }
+        if (await checkParentLocations()) {
+          return Future.value(true);
         }
 
         break;
@@ -64,9 +47,72 @@ void callbackDispatcher() {
   });
 }
 
-Future<void> checkLocations() async {}
+Future<bool> checkLocations() async {
+  String userId = await getCredentials();
+  String jsonString = await getJsonLocation();
+  Map<String, dynamic> jsonMap = jsonDecode(jsonString);
+  updateUserLocationId(userId, "Set");
 
-Future<void> notifyUsers(locId) async {}
+  Position userLocation = await Geolocator.getCurrentPosition();
+  List<dynamic> longitudeList = jsonMap['longitude'];
+  List<dynamic> latitudeList = jsonMap['latitude'];
+  List<dynamic> rads = jsonMap['radius'];
+  List<dynamic> locId = jsonMap['id'];
+  Logger().e(longitudeList.length);
+
+  await getLocationByUser(userId);
+  for (int i = 0; i < longitudeList.length; i++) {
+    if (isUserInLocation(latitudeList[i], longitudeList[i],
+        userLocation.latitude ?? 0, userLocation.longitude ?? 0, rads[i])) {
+      await updateUserLocationId(userId, locId[i]);
+      await sendGroupPushMessage(locId[i], "The user is in a geofence",
+              "This is a background process")
+          .then((value) {
+        return true;
+      });
+    }
+  }
+  await updateUserLocationId(userId, "");
+  return false;
+}
+
+Future<bool> checkParentLocations() async {
+  String userId = await getCredentials();
+  String jsonString = await getJsonParentLocation();
+  Map<String, dynamic> jsonMap = jsonDecode(jsonString);
+
+  Position userLocation = await Geolocator.getCurrentPosition();
+  List<dynamic> longitudeList = jsonMap['longitude'];
+  List<dynamic> latitudeList = jsonMap['latitude'];
+  List<dynamic> rads = jsonMap['radius'];
+  List<dynamic> locId = jsonMap['id'];
+  Logger().e(longitudeList.length);
+
+  await getLocationByUser(userId);
+  for (int i = 0; i < longitudeList.length; i++) {
+    if (isUserInLocation(latitudeList[i], longitudeList[i],
+        userLocation.latitude ?? 0, userLocation.longitude ?? 0, rads[i])) {
+      WidgetsFlutterBinding.ensureInitialized();
+      await Firebase.initializeApp();
+      await updateUserLocationId(userId, locId[i]);
+      NotificationModel newNoti = NotificationModel(
+          title: "The user is in a geofence",
+          body: "This is a background process",
+          time: DateTime.now(),
+          user_id: userId,
+          id: "0");
+
+      await addUserNotification(newNoti);
+      await sendGroupPushMessage(locId[i], "The user is in a geofence",
+              "This is a background process")
+          .then((value) {
+        return true;
+      });
+    }
+  }
+  await updateUserLocationId(userId, "");
+  return false;
+}
 
 Future<void> sendGroupPushMessage(
     String token, String title, String body) async {
@@ -99,12 +145,16 @@ Future<void> sendGroupPushMessage(
   try {
     await http
         .post(url, headers: headers, body: json.encode(bodyJson))
-        .then((value) {
-      Logger().e(value);
-    });
+        .then((value) {});
   } catch (e) {
     Logger().e(e);
   }
+}
+
+Future<String> getParentCred() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String parentid = prefs.getString('parentid') ?? '';
+  return parentid;
 }
 
 Future<String> getCredentials() async {
@@ -116,6 +166,12 @@ Future<String> getCredentials() async {
 Future<String> getJsonLocation() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String userid = prefs.getString('jsonLocation') ?? '';
+  return userid;
+}
+
+Future<String> getJsonParentLocation() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String userid = prefs.getString('jsonParentLocations') ?? '';
   return userid;
 }
 
@@ -166,9 +222,15 @@ class _PeopleMapState extends State<PeopleMap> {
   Future<void> init() async {
     String userId = await getCredentials();
     String jsonString = await getJsonLocation();
+    String parentId = await getParentCred();
+
     await getLocationByUser(userId).then((value) {
       // Logger().e(jsonString);
       initLocations();
+    });
+
+    await getParentLocations(parentId).then((value) {
+      initParentLocations();
     });
     setState(() {
       isLoading = false;
@@ -187,7 +249,32 @@ class _PeopleMapState extends State<PeopleMap> {
       zIndex: 1,
       strokeColor: Colors.brightOrange,
     );
-    // getCurrentLocation();
+  }
+
+  void initParentLocations() {
+    for (var element in globals.parentLocations) {
+      FirebaseMessaging.instance.subscribeToTopic(element.id);
+
+      markerList.add(
+        Marker(
+          markerId: MarkerId("Location${element.id}"),
+          position: LatLng(element.latitude, element.longitude),
+          draggable: false,
+          zIndex: 2,
+          flat: true,
+          anchor: const Offset(0.5, 0.5),
+        ),
+      );
+      circleList.add(
+        Circle(
+            circleId: CircleId(element.id.toString()),
+            radius: element.radius,
+            zIndex: 1,
+            strokeColor: Colors.brightOrange,
+            center: LatLng(element.latitude, element.longitude),
+            strokeWidth: 2),
+      );
+    }
   }
 
   void initLocations() {
@@ -258,34 +345,12 @@ class _PeopleMapState extends State<PeopleMap> {
     });
   }
 
-  void getCurrentLocation() async {
-    try {
-      // Uint8List imageData = await getMarker();
-      var location = await _locationTracker.getLocation();
-      // Logger().i("location$location");
-      updateMarkerAndCircle(location);
-      // final locData = await Location().getLocation();
-      // _controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-      //     bearing: 192.8334901395799,
-      //     target: LatLng(locData.latitude ?? 0, locData.longitude ?? 0),
-      //     tilt: 0,
-      //     zoom: 18.00)));
-
-      _locationSub = _locationTracker.onLocationChanged
-          .listen((LocationData newLocalData) {
-        if (_controller != null) {
-          updateMarkerAndCircle(newLocalData);
-        }
-      });
-    } on PlatformException catch (e) {
-      if (e.code == 'PERMISSION_DENIED') {
-        debugPrint("Permission Denied");
-      }
-    }
-  }
-
   @override
   void initState() {
+    setState(() {
+      markerList = [];
+      circleList = [];
+    });
     init();
     super.initState();
     Workmanager().initialize(
@@ -300,6 +365,9 @@ class _PeopleMapState extends State<PeopleMap> {
       "1",
       fetchBackground,
       frequency: const Duration(minutes: 15),
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
     );
   }
 
@@ -351,10 +419,15 @@ class _PeopleMapState extends State<PeopleMap> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // sendGroupPushMessage("pljCyKNbPPEa6fH94rG6", "Group test", "hello");
+          // sendGroupPushMessage("RV9GmNueIPaOTtjMaZ8o", "Group test", "hello");
+          // updateUserLocationId(globals.currentUser.id, "Hiu");
+
           Workmanager().registerOneOffTask(
             "2",
             fetchBackground,
+            constraints: Constraints(
+              networkType: NetworkType.connected,
+            ),
           );
         },
         child: const Icon(Icons.location_searching),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/globals.dart' as globals;
 
 class SettingsList extends StatefulWidget {
   const SettingsList({super.key});
@@ -9,6 +10,15 @@ class SettingsList extends StatefulWidget {
 
 class SettingsListState extends State<SettingsList> {
   String username = "Сумъяахүү";
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      username = globals.currentUser.name;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

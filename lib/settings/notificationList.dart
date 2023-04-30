@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/globals.dart' as globals;
+import '../models/database.dart';
 
 class NotificationList extends StatefulWidget {
   const NotificationList({super.key});
@@ -9,6 +11,19 @@ class NotificationList extends StatefulWidget {
 
 class _NotificationListState extends State<NotificationList> {
   List<String> notification = ["Not1", "Not2", "Not3"];
+  bool isLoading = true;
+  void initState() {
+    super.initState();
+    init();
+  }
+
+  Future<void> init() async {
+    getUserNotification(globals.currentUser.id);
+    setState(() {
+      isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,7 +54,7 @@ class _NotificationListState extends State<NotificationList> {
             separatorBuilder: (BuildContext context, int index) {
               return const SizedBox(height: 10);
             },
-            itemCount: notification.length,
+            itemCount: globals.userNotifications.length,
             itemBuilder: (BuildContext context, int index) {
               return Container(
                 height: 125,
@@ -93,12 +108,12 @@ class _NotificationListState extends State<NotificationList> {
                       padding: const EdgeInsets.only(top: 25),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const <Widget>[
+                        children: <Widget>[
                           Text(
-                            "Сумъяахүү",
+                            globals.userNotifications[index].title,
                             style: TextStyle(fontSize: 18),
                           ),
-                          SizedBox(
+                          const SizedBox(
                             height: 10,
                           ),
                           Text("Сургуулиас 17:30 цагт гарав.")
@@ -106,11 +121,21 @@ class _NotificationListState extends State<NotificationList> {
                       ),
                     ),
                     const SizedBox(
-                      width: 50,
+                      width: 10,
                     ),
-                    const Padding(
-                        padding: EdgeInsets.only(top: 70),
-                        child: Text("Өнөөдөр"))
+                    Padding(
+                      padding: EdgeInsets.only(top: 70),
+                      child: Text(
+                        globals.userNotifications[index].time
+                            .toString()
+                            .substring(
+                              0,
+                              globals.userNotifications[index].time
+                                  .toString()
+                                  .indexOf(' '),
+                            ),
+                      ),
+                    ),
                   ],
                 ),
               );

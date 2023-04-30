@@ -40,7 +40,8 @@ class _EnterChildNameState extends State<EnterChildName> {
         longitude: 0,
         password: passwordCont.text,
         id: "0",
-        parent_id: globals.sentId);
+        parent_id: globals.sentId,
+        location_id: "");
 
     if (await register(newUser)) {
       await login(username.text, passwordCont.text).then((value) {

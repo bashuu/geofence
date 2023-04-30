@@ -5,6 +5,7 @@ import 'package:geofence/models/user.dart';
 import 'place.dart';
 
 List<PlaceLocation> locations = [];
+List<PlaceLocation> parentLocations = [];
 List<User> users = [];
 List<User> locationUser = [];
 List<NotificationModel> userNotifications = [];

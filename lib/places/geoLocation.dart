@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/place.dart';
 import '../models/popUpModal.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/globals.dart' as globals;
 import '../models/database.dart';
@@ -16,23 +15,19 @@ class GeoLocation extends StatefulWidget {
 class _GeoLocationState extends State<GeoLocation> {
   bool isEditing = false;
   bool isLoading = true;
-  Future<void> delete(PlaceLocation doc, int index) async {
-    setState(() {
-      isLoading = true;
-    });
-    deleteLocation(doc).then(
-      (value) async {
-        await getLocations();
-        setState(() {
-          isLoading = false;
-        });
-      },
-    );
-  }
+  List<PlaceLocation> dataset = [];
 
   Future<void> init() async {
     await getLocationByUser(globals.currentUser.id).then((value) {
       setState(() {
+        dataset.addAll(globals.locations);
+        isLoading = false;
+      });
+    });
+    await getParentLocations(globals.currentUser.parent_id).then((value) {
+      setState(() {
+        dataset.addAll(globals.parentLocations);
+
         isLoading = false;
       });
     });
@@ -78,7 +73,7 @@ class _GeoLocationState extends State<GeoLocation> {
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.5,
                   child: ListView.separated(
-                    itemCount: globals.locations.length,
+                    itemCount: dataset.length,
                     separatorBuilder: (context, index) {
                       // add a divider between items
                       return const Divider(
@@ -102,9 +97,8 @@ class _GeoLocationState extends State<GeoLocation> {
                                             confirmButtonText: "yes",
                                             cancelButtonText: "no",
                                             onConfirmPressed: () async {
-                                              await delete(
-                                                      globals.locations[index],
-                                                      index)
+                                              await deleteLocation(
+                                                      dataset[index])
                                                   .then((value) {
                                                 Navigator.of(context).pop();
                                               });
@@ -125,7 +119,7 @@ class _GeoLocationState extends State<GeoLocation> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: Text(
-                                globals.locations[index].name,
+                                dataset[index].name,
                                 style: const TextStyle(fontSize: 16),
                               ),
                             ),
@@ -135,7 +129,7 @@ class _GeoLocationState extends State<GeoLocation> {
                           icon: const Icon(Icons.arrow_forward_ios_outlined),
                           onPressed: () {
                             Navigator.pushNamed(context, '/locationDetails');
-                            globals.locationDetails = globals.locations[index];
+                            globals.locationDetails = dataset[index];
                           },
                         ),
                       );

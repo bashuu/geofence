@@ -40,6 +40,22 @@ Future<void> getLocationByUser(String id) async {
   await prefs.setString('jsonLocation', encodeString());
 }
 
+Future<void> getParentLocations(String parentId) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  globals.parentLocations = [];
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FirebaseFirestore.instance
+      .collection('locations')
+      .where('userId', isEqualTo: parentId)
+      .get()
+      .then((querySnapshot) {
+    for (var doc in querySnapshot.docs) {
+      globals.parentLocations.add(PlaceLocation.fromJson(doc.data()));
+    }
+  }).catchError((error) {});
+  await prefs.setString('jsonParentLocations', encodeString());
+}
+
 Future<void> addLocations(PlaceLocation newLocation) async {
   final docLocation = FirebaseFirestore.instance.collection('locations').doc();
   newLocation.id = docLocation.id;
@@ -48,6 +64,25 @@ Future<void> addLocations(PlaceLocation newLocation) async {
     addUserLocation(newLocation);
     getLocations();
   });
+}
+
+Future<void> updateLocationOfUser(
+    String id, String latitude, String longitude) async {
+  await FirebaseFirestore.instance
+      .collection('users')
+      .doc(id)
+      .update({'latitude': latitude, 'longitude': longitude})
+      .then((value) => print("User location updated successfully"))
+      .catchError((error) => print("Failed to update user location: $error"));
+}
+
+Future<void> updateUserLocationId(String id, String locationId) async {
+  await FirebaseFirestore.instance
+      .collection('users')
+      .doc(id)
+      .update({'location_id': locationId})
+      .then((value) => print("User location updated successfully"))
+      .catchError((error) => print("Failed to update user location: $error"));
 }
 
 Future<void> deleteLocation(PlaceLocation doc) async {
@@ -90,6 +125,7 @@ Future<bool> login(String username, String password) async {
       globals.currentUser = globals.users[i];
       await prefs.setString('token', globals.currentUser.name);
       await prefs.setString('userid', globals.currentUser.id);
+      await prefs.setString('parentid', globals.currentUser.parent_id);
       getLocationByUser(globals.currentUser.id);
 
       return true;
@@ -209,6 +245,7 @@ Future<void> getUserNotification(String id) async {
 }
 
 Future<void> addUserNotification(NotificationModel noti) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final docNotification =
       FirebaseFirestore.instance.collection('notification').doc();
   noti.id = docNotification.id;
@@ -234,6 +271,7 @@ Future<void> addUserDevice(DeviceModel device) async {
       .instance
       .collection('devices')
       .where('token', isEqualTo: device.token)
+      .where('user_id', isEqualTo: device.user_id)
       .get();
   if (snapshot.size == 0) {
     final docDevices = FirebaseFirestore.instance.collection('devices').doc();

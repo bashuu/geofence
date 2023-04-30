@@ -41,9 +41,7 @@ class _LocationDetailsState extends State<LocationDetails> {
   }
 
   Future<void> getUser() async {
-    await getAllLocationUsers(globals.locationDetails).then((value) {
-      Logger().e(globals.locationUser.length);
-    });
+    await getAllLocationUsers(globals.locationDetails).then((value) {});
   }
 
   @override
@@ -197,6 +195,7 @@ class _LocationDetailsState extends State<LocationDetails> {
                         },
                         itemBuilder: (BuildContext context, int index) {
                           return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: <Widget>[
                               Container(
                                 width: 50,

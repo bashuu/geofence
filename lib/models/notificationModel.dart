@@ -19,7 +19,8 @@ class NotificationModel {
     return NotificationModel(
       title: json['title'],
       body: json['body'],
-      time: json['time'],
+      time: DateTime.fromMillisecondsSinceEpoch(
+          json['time'].millisecondsSinceEpoch),
       id: json['id'],
       user_id: json['user_id'],
     );
