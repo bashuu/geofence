@@ -167,20 +167,6 @@ class _LoginParentState extends State<LoginParent> {
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 252.0, top: 8.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, "/registerPage");
-                      },
-                      child: const Text(
-                        'Нууц үг сэргээх',
-                        style: TextStyle(
-                          color: Colors.brightOrange,
-                        ),
-                      ),
-                    ),
-                  ),
                   SizedBox(
                     height: MediaQuery.of(context).size.height * 0.28,
                   ),

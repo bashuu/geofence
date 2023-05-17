@@ -41,7 +41,9 @@ class _EnterChildNameState extends State<EnterChildName> {
         password: passwordCont.text,
         id: "0",
         parent_id: globals.sentId,
-        location_id: "");
+        location_id: "",
+        create_date: DateTime.now(),
+        update_date: DateTime.now());
 
     if (await register(newUser)) {
       await login(username.text, passwordCont.text).then((value) {

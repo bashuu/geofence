@@ -10,8 +10,8 @@ class NotificationList extends StatefulWidget {
 }
 
 class _NotificationListState extends State<NotificationList> {
-  List<String> notification = ["Not1", "Not2", "Not3"];
   bool isLoading = true;
+  @override
   void initState() {
     super.initState();
     init();
@@ -21,6 +21,7 @@ class _NotificationListState extends State<NotificationList> {
     getUserNotification(globals.currentUser.id);
     setState(() {
       isLoading = false;
+      globals.userNotifications.sort((a, b) => b.time.compareTo(a.time));
     });
   }
 
@@ -104,20 +105,26 @@ class _NotificationListState extends State<NotificationList> {
                         )),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 25),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            globals.userNotifications[index].title,
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          Text("Сургуулиас 17:30 цагт гарав.")
-                        ],
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 25),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              globals.userNotifications[index].title,
+                              style: const TextStyle(fontSize: 16),
+                              maxLines: 2,
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              globals.userNotifications[index].body,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(

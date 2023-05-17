@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/globals.dart' as globals;
 
 class SettingsList extends StatefulWidget {
@@ -266,7 +267,12 @@ class SettingsListState extends State<SettingsList> {
                 ],
                 borderRadius: const BorderRadius.all(Radius.circular(15))),
             child: TextButton(
-              onPressed: () {},
+              onPressed: () async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.setString('userid', "").then((value) {
+                  Navigator.pushNamed(context, "/loginPage");
+                });
+              },
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(
                     Colors.brightOrange), // background color

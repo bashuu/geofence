@@ -16,13 +16,13 @@ class AddLocation extends StatefulWidget {
 
 class CchooseLocationState extends State<AddLocation> {
   TextEditingController locationNameController = TextEditingController();
-  TextEditingController locationSearchController = TextEditingController();
+  TextEditingController locationAddressController = TextEditingController();
   PanelController panelController = PanelController();
   late GoogleMapController _controller;
 
   final String _selectText = "Байршил сонгох";
   List<String> chipSelect = ["150 M", "500 M", "1 km", "2km", "5km"];
-  int? _value = 1;
+  int? _value = 0;
   double _radius = 150;
   bool _showWarning = false;
 
@@ -42,7 +42,6 @@ class CchooseLocationState extends State<AddLocation> {
       setState(() {
         _showWarning = true;
       });
-      throw Exception("No name");
     }
     _showWarning = false;
     PlaceLocation newLocation = PlaceLocation(
@@ -50,9 +49,11 @@ class CchooseLocationState extends State<AddLocation> {
         latitude: _center!.latitude,
         longitude: _center!.longitude,
         radius: _radius,
-        address: "Khan uul",
+        address: locationAddressController.text,
         userId: globals.currentUser.id,
-        id: "0");
+        id: "0",
+        create_date: DateTime.now(),
+        update_date: DateTime.now());
 
     await addLocations(newLocation);
   }
@@ -183,7 +184,7 @@ class CchooseLocationState extends State<AddLocation> {
                       borderRadius:
                           const BorderRadius.all(Radius.circular(15))),
                   child: TextField(
-                    controller: locationSearchController,
+                    controller: locationAddressController,
                     keyboardType: TextInputType.streetAddress,
                     decoration: const InputDecoration(
                       hintText: 'Байршлын нэр',
@@ -261,52 +262,51 @@ class CchooseLocationState extends State<AddLocation> {
                 height: MediaQuery.of(context).size.height * 0.05,
               ),
               Center(
-                child: GestureDetector(
-                  onTap: () {
-                    panelController.isPanelOpen
-                        ? panelController.close()
-                        : panelController.open();
-                  },
-                  child: Container(
-                    height: 60.0,
-                    width: MediaQuery.of(context).size.width * 0.8,
-                    decoration: BoxDecoration(
+                child: Container(
+                  height: 60.0,
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  decoration: BoxDecoration(
+                      color: Colors.darkerWhite,
+                      border: Border.all(
                         color: Colors.darkerWhite,
-                        border: Border.all(
-                          color: Colors.darkerWhite,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                          offset:
+                              const Offset(0, 3), // changes position of shadow
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 5,
-                            blurRadius: 7,
-                            offset: const Offset(
-                                0, 3), // changes position of shadow
-                          ),
-                        ],
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(15))),
-                    child: Row(children: <Widget>[
-                      const Padding(padding: EdgeInsets.only(left: 10)),
-                      Text(
-                        _selectText,
-                        style: const TextStyle(
-                            color: Colors.ligthBlack, fontSize: 16),
+                      ],
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(15))),
+                  child: TextField(
+                    controller: locationAddressController,
+                    keyboardType: TextInputType.name,
+                    decoration: const InputDecoration(
+                      hintText: 'Байршлын хаяг',
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.transparent,
+                        ),
                       ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.4,
-                        height: 60.0,
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.transparent,
+                        ),
                       ),
-                      const Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Colors.brightOrange,
-                      )
-                    ]),
+                    ),
                   ),
                 ),
               ),
+              if (_showWarning)
+                const Text(
+                  'Text is required',
+                  style: TextStyle(color: Colors.red),
+                ),
               SizedBox(
-                height: MediaQuery.of(context).size.height * 0.05,
+                height: MediaQuery.of(context).size.height * 0.08,
               ),
               Container(
                 width: double.infinity,

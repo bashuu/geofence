@@ -40,6 +40,20 @@ Future<void> getLocationByUser(String id) async {
   await prefs.setString('jsonLocation', encodeString());
 }
 
+Future<List<User>> getAllChildren(String parentId) async {
+  List<User> child = [];
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .where('parent_id', isEqualTo: parentId)
+      .get()
+      .then((querySnapshot) {
+    for (var doc in querySnapshot.docs) {
+      child.add(User.fromJson(doc.data()));
+    }
+  });
+  return child;
+}
+
 Future<void> getParentLocations(String parentId) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   globals.parentLocations = [];
@@ -67,7 +81,7 @@ Future<void> addLocations(PlaceLocation newLocation) async {
 }
 
 Future<void> updateLocationOfUser(
-    String id, String latitude, String longitude) async {
+    String id, double latitude, double longitude) async {
   await FirebaseFirestore.instance
       .collection('users')
       .doc(id)
@@ -106,17 +120,24 @@ Future<void> getUsers() async {
   }).catchError((error) {});
 }
 
-Future<void> getUserDetails(String id) async {
-  DocumentSnapshot snapshot =
-      await FirebaseFirestore.instance.collection('users').doc(id).get();
-  if (snapshot.exists) {
-    Map<String, dynamic>? data = snapshot.data() as Map<String, dynamic>?;
-  }
+Future<User?> getUserDetails(String id) async {
+  User? curUser = null;
+  await FirebaseFirestore.instance
+      .collection('users')
+      .where("id", isEqualTo: id)
+      .get()
+      .then((querySnapshot) {
+    for (var doc in querySnapshot.docs) {
+      curUser = User.fromJson(doc.data());
+    }
+  });
+
+  return curUser;
 }
 
 Future<bool> login(String username, String password) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  getUsers();
+  await getUsers();
   for (int i = 0; i < globals.users.length; i++) {
     if (globals.users[i].name == username &&
         globals.users[i].password == password) {
@@ -140,7 +161,8 @@ String encodeString() {
     'latitude': [],
     'longitude': [],
     'radius': [],
-    'id': []
+    'id': [],
+    'name': []
   };
   for (var loc in globals.locations) {
     double latitude = loc.latitude;
@@ -150,6 +172,7 @@ String encodeString() {
     myMap['longitude'].add(loc.longitude);
     myMap['radius'].add(loc.radius);
     myMap['id'].add(loc.id);
+    myMap['name'].add(loc.name);
   }
   return json.encode(myMap);
 }

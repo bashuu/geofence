@@ -32,12 +32,16 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 void callbackDispatcher() async {
   Workmanager().executeTask((task, inputData) async {
     await Firebase.initializeApp();
+    String userId = await getCredentials();
+    Position userLocation = await Geolocator.getCurrentPosition();
+
+    await updateLocationOfUser(
+        userId, userLocation.latitude, userLocation.longitude);
     switch (task) {
       case fetchBackground:
         if (await checkLocations()) {
           return Future.value(true);
-        }
-        if (await checkParentLocations()) {
+        } else if (await checkParentLocations()) {
           return Future.value(true);
         }
 
@@ -48,9 +52,14 @@ void callbackDispatcher() async {
 }
 
 Future<bool> checkLocations() async {
-  String userId = await getCredentials();
   String jsonString = await getJsonLocation();
   Map<String, dynamic> jsonMap = jsonDecode(jsonString);
+  String userId = await getCredentials();
+  String name = await getToken();
+  String locNameA = "";
+  String title = "";
+  String body = "";
+  String now = DateTime.now().toString();
   updateUserLocationId(userId, "Set");
 
   Position userLocation = await Geolocator.getCurrentPosition();
@@ -58,6 +67,7 @@ Future<bool> checkLocations() async {
   List<dynamic> latitudeList = jsonMap['latitude'];
   List<dynamic> rads = jsonMap['radius'];
   List<dynamic> locId = jsonMap['id'];
+  List<dynamic> locName = jsonMap['name'];
   Logger().e(longitudeList.length);
 
   await getLocationByUser(userId);
@@ -65,9 +75,21 @@ Future<bool> checkLocations() async {
     if (isUserInLocation(latitudeList[i], longitudeList[i],
         userLocation.latitude ?? 0, userLocation.longitude ?? 0, rads[i])) {
       await updateUserLocationId(userId, locId[i]);
-      await sendGroupPushMessage(locId[i], "The user is in a geofence",
-              "This is a background process")
-          .then((value) {
+      locNameA = locName[i];
+      title = "$name хэрэглэгч $locNameA жеофенс-руу нэвтэрсэн байна ";
+      body = "$locNameA жеофенс-рүү $name хэрэглэгч $now цагт нэвтэрсэн байна";
+
+      NotificationModel newNoti = NotificationModel(
+          title: title,
+          body: body,
+          time: DateTime.now(),
+          user_id: userId,
+          id: "0",
+          create_date: DateTime.now(),
+          update_date: DateTime.now());
+
+      await addUserNotification(newNoti);
+      await sendGroupPushMessage(locId[i], title, body).then((value) {
         return true;
       });
     }
@@ -79,6 +101,12 @@ Future<bool> checkLocations() async {
 Future<bool> checkParentLocations() async {
   String userId = await getCredentials();
   String jsonString = await getJsonParentLocation();
+  String name = await getToken();
+  String locNameA = "";
+  String title = "";
+  String body = "";
+  String now = DateTime.now().toString();
+
   Map<String, dynamic> jsonMap = jsonDecode(jsonString);
 
   Position userLocation = await Geolocator.getCurrentPosition();
@@ -86,26 +114,29 @@ Future<bool> checkParentLocations() async {
   List<dynamic> latitudeList = jsonMap['latitude'];
   List<dynamic> rads = jsonMap['radius'];
   List<dynamic> locId = jsonMap['id'];
-  Logger().e(longitudeList.length);
-
-  await getLocationByUser(userId);
+  List<dynamic> locName = jsonMap['name'];
+  await getParentLocations(userId);
   for (int i = 0; i < longitudeList.length; i++) {
     if (isUserInLocation(latitudeList[i], longitudeList[i],
         userLocation.latitude ?? 0, userLocation.longitude ?? 0, rads[i])) {
       WidgetsFlutterBinding.ensureInitialized();
       await Firebase.initializeApp();
       await updateUserLocationId(userId, locId[i]);
+      locNameA = locName[i];
+      title = "$name хэрэглэгч $locNameA жеофенс-руу нэвтэрсэн байна ";
+      body = "$locNameA жеофенс-рүү $name хэрэглэгч $now цагт нэвтэрсэн байна";
+
       NotificationModel newNoti = NotificationModel(
-          title: "The user is in a geofence",
-          body: "This is a background process",
+          title: title,
+          body: body,
           time: DateTime.now(),
           user_id: userId,
-          id: "0");
+          id: "0",
+          create_date: DateTime.now(),
+          update_date: DateTime.now());
 
       await addUserNotification(newNoti);
-      await sendGroupPushMessage(locId[i], "The user is in a geofence",
-              "This is a background process")
-          .then((value) {
+      await sendGroupPushMessage(locId[i], title, body).then((value) {
         return true;
       });
     }
@@ -116,9 +147,6 @@ Future<bool> checkParentLocations() async {
 
 Future<void> sendGroupPushMessage(
     String token, String title, String body) async {
-  Logger().i("Send Noti");
-  Logger().e(token);
-
   final url = Uri.parse('https://fcm.googleapis.com/fcm/send');
   final headers = {
     'Content-Type': 'application/json',
@@ -163,6 +191,12 @@ Future<String> getCredentials() async {
   return userid;
 }
 
+Future<String> getToken() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String token = prefs.getString('token') ?? '';
+  return token;
+}
+
 Future<String> getJsonLocation() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String userid = prefs.getString('jsonLocation') ?? '';
@@ -205,11 +239,14 @@ class _PeopleMapState extends State<PeopleMap> {
   late GoogleMapController _controller;
   late StreamSubscription _locationSub;
   final Location _locationTracker = Location();
+  late StreamSubscription<Position> _locationSubs;
+  BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarker;
+
   bool isLoading = true;
   List<User> users = [];
   List<Marker> markerList = [];
   List<Circle> circleList = [];
-
+  List<User> child = [];
   late Marker marker;
   late Circle circle;
 
@@ -232,22 +269,37 @@ class _PeopleMapState extends State<PeopleMap> {
     await getParentLocations(parentId).then((value) {
       initParentLocations();
     });
+
+    child = await getAllChildren(globals.currentUser.id);
+    for (var el in child) {
+      if (el.latitude != -1) {
+        markerList.add(
+          Marker(
+            markerId: MarkerId("Location${el.id}"),
+            position: LatLng(el.latitude, el.longitude),
+            draggable: false,
+            zIndex: 2,
+            flat: true,
+            anchor: const Offset(0.5, 0.5),
+          ),
+        );
+      }
+    }
+
     setState(() {
       isLoading = false;
     });
+  }
 
-    marker = const Marker(
-      markerId: MarkerId("Home"),
-      position: LatLng(0, 0),
-      draggable: false,
-      zIndex: 2,
-      flat: true,
-      anchor: Offset(0.5, 0.5),
-    );
-    circle = const Circle(
-      circleId: CircleId("car"),
-      zIndex: 1,
-      strokeColor: Colors.brightOrange,
+  void addCustomIcon() {
+    BitmapDescriptor.fromAssetImage(
+            const ImageConfiguration(), "assets/user_marker.jpg")
+        .then(
+      (icon) {
+        setState(() {
+          markerIcon = icon;
+        });
+      },
     );
   }
 
@@ -316,37 +368,26 @@ class _PeopleMapState extends State<PeopleMap> {
     }
   }
 
-  Future<Uint8List> getMarker() async {
-    ByteData byteData = await DefaultAssetBundle.of(context)
-        .load("assets/map_circular_icon.png");
-    return byteData.buffer.asUint8List();
-  }
+  Future<void> getCurrentLocation() async {
+    var location = await _locationTracker.getLocation();
+    if (_locationSub != null) {
+      _locationSub.cancel();
+    }
 
-  void updateMarkerAndCircle(LocationData? newLocalData) {
-    LatLng latLng;
-    latLng = LatLng(newLocalData?.latitude ?? 0, newLocalData?.longitude ?? 0);
-
-    setState(() {
-      marker = Marker(
-        markerId: const MarkerId("Home"),
-        position: latLng,
-        draggable: false,
-        zIndex: 2,
-        flat: true,
-        anchor: const Offset(0.5, 0.5),
-      );
-      circle = Circle(
-        circleId: const CircleId("car"),
-        radius: 100,
-        zIndex: 1,
-        strokeColor: Colors.brightOrange,
-        center: latLng,
-      );
+    _locationSubs = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+      distanceFilter: 100,
+    )).listen((Position? position) {
+      Logger().e(position == null
+          ? 'Unknown'
+          : '${position.latitude.toString()}, ${position.longitude.toString()}');
     });
   }
 
   @override
   void initState() {
+    // addCustomIcon();
+
     setState(() {
       markerList = [];
       circleList = [];
@@ -421,7 +462,6 @@ class _PeopleMapState extends State<PeopleMap> {
         onPressed: () {
           // sendGroupPushMessage("RV9GmNueIPaOTtjMaZ8o", "Group test", "hello");
           // updateUserLocationId(globals.currentUser.id, "Hiu");
-
           Workmanager().registerOneOffTask(
             "2",
             fetchBackground,

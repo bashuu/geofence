@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/database.dart';
+import '../models/globals.dart' as globals;
+import '../models/user.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -8,6 +13,32 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  @override
+  void initState() {
+    super.initState();
+    init();
+  }
+
+  Future<void> init() async {
+    String userId = await getCredentials();
+    late User? curUser = null;
+
+    curUser = await getUserDetails(userId);
+    Logger().e(curUser?.id);
+
+    if (curUser != null) {
+      await login(curUser.name, curUser.password).then((value) {
+        Navigator.pushNamed(context, "/homePage");
+      });
+    }
+  }
+
+  Future<String> getCredentials() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userid = prefs.getString('userid') ?? '';
+    return userid;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

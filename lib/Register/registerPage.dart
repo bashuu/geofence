@@ -44,7 +44,9 @@ class _RegisterPageState extends State<RegisterPage> {
         password: passwordCont.text,
         id: "0",
         parent_id: "0",
-        location_id: "");
+        location_id: "",
+        create_date: DateTime.now(),
+        update_date: DateTime.now());
 
     if (await register(newUser)) {
       await login(username.text, passwordCont.text).then((value) {

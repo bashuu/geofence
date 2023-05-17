@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../models/globals.dart' as globals;
+import '../models/database.dart';
+import '../models/notificationModel.dart';
 
 class LocationHistory extends StatefulWidget {
   const LocationHistory({super.key});
@@ -8,6 +11,22 @@ class LocationHistory extends StatefulWidget {
 }
 
 class _LocationHistoryState extends State<LocationHistory> {
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    init();
+  }
+
+  Future<void> init() async {
+    getUserNotification(globals.currentUser.id);
+    setState(() {
+      isLoading = false;
+      globals.userNotifications.sort((a, b) => a.time.compareTo(a.time));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,7 +57,28 @@ class _LocationHistoryState extends State<LocationHistory> {
           ],
         ),
       ),
-      body: Column(children: const <Widget>[]),
+      body: Column(children: <Widget>[
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.85,
+          child: ListView.builder(
+            itemCount: globals.userNotifications.length,
+            itemBuilder: (BuildContext context, int index) {
+              NotificationModel collection = globals.userNotifications[index];
+
+              final date = collection.time;
+              final userId = collection.user_id;
+              final title = collection.title;
+              final bodu = collection.body;
+              if (userId == globals.currentUser.id) {
+                return ListTile(
+                  title: Text('$title'),
+                  subtitle: Text('$bodu'),
+                );
+              }
+            },
+          ),
+        ),
+      ]),
     );
   }
 }

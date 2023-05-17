@@ -97,7 +97,9 @@ class _HomePageState extends State<HomePage> {
         created_at: DateTime.now(),
         user_id: globals.currentUser.id,
         token: token ?? " ",
-        id: "");
+        id: "",
+        create_date: DateTime.now(),
+        update_date: DateTime.now());
     addUserDevice(newDevice);
   }
 
