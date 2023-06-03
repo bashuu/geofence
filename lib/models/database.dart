@@ -37,7 +37,7 @@ Future<void> getLocationByUser(String id) async {
       globals.locations.add(PlaceLocation.fromJson(doc.data()));
     }
   }).catchError((error) {});
-  await prefs.setString('jsonLocation', encodeString());
+  await prefs.setString('jsonLocation', encodeString(globals.locations));
 }
 
 Future<List<User>> getAllChildren(String parentId) async {
@@ -67,7 +67,8 @@ Future<void> getParentLocations(String parentId) async {
       globals.parentLocations.add(PlaceLocation.fromJson(doc.data()));
     }
   }).catchError((error) {});
-  await prefs.setString('jsonParentLocations', encodeString());
+  await prefs.setString(
+      'jsonParentLocations', encodeString(globals.parentLocations));
 }
 
 Future<void> addLocations(PlaceLocation newLocation) async {
@@ -155,7 +156,7 @@ Future<bool> login(String username, String password) async {
   return false;
 }
 
-String encodeString() {
+String encodeString(List<PlaceLocation> list) {
   String jsonString;
   Map<String, dynamic> myMap = {
     'latitude': [],
@@ -164,7 +165,7 @@ String encodeString() {
     'id': [],
     'name': []
   };
-  for (var loc in globals.locations) {
+  for (var loc in list) {
     double latitude = loc.latitude;
     double longitude = loc.longitude;
 
@@ -174,6 +175,8 @@ String encodeString() {
     myMap['id'].add(loc.id);
     myMap['name'].add(loc.name);
   }
+  Logger().e(myMap);
+
   return json.encode(myMap);
 }
 

@@ -32,8 +32,8 @@ class User {
         parent_id: json['parent_id'],
         password: json['password'],
         location_id: json['location_id'],
-        create_date: DateTime.fromMillisecondsSinceEpoch(json['create_date']),
-        update_date: DateTime.fromMicrosecondsSinceEpoch(json['update_date']));
+        create_date: (json['create_date']).toDate(),
+        update_date: (json['update_date']).toDate());
   }
 
   Map<String, dynamic> toJson() => {

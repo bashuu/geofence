@@ -18,7 +18,7 @@ class _NotificationListState extends State<NotificationList> {
   }
 
   Future<void> init() async {
-    getUserNotification(globals.currentUser.id);
+    await getUserNotification(globals.currentUser.id);
     setState(() {
       isLoading = false;
       globals.userNotifications.sort((a, b) => b.time.compareTo(a.time));

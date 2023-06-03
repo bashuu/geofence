@@ -52,9 +52,11 @@ void callbackDispatcher() async {
 }
 
 Future<bool> checkLocations() async {
-  String jsonString = await getJsonLocation();
-  Map<String, dynamic> jsonMap = jsonDecode(jsonString);
   String userId = await getCredentials();
+  await getLocationByUser(userId);
+  String jsonString = await getJsonLocation();
+
+  Map<String, dynamic> jsonMap = jsonDecode(jsonString);
   String name = await getToken();
   String locNameA = "";
   String title = "";
@@ -70,7 +72,6 @@ Future<bool> checkLocations() async {
   List<dynamic> locName = jsonMap['name'];
   Logger().e(longitudeList.length);
 
-  await getLocationByUser(userId);
   for (int i = 0; i < longitudeList.length; i++) {
     if (isUserInLocation(latitudeList[i], longitudeList[i],
         userLocation.latitude ?? 0, userLocation.longitude ?? 0, rads[i])) {
@@ -89,7 +90,10 @@ Future<bool> checkLocations() async {
           update_date: DateTime.now());
 
       await addUserNotification(newNoti);
-      await sendGroupPushMessage(locId[i], title, body).then((value) {
+      await sendGroupPushMessage(locId[i].toLowerCase(), title, body)
+          .then((value) {
+        Logger().e(locId[i]);
+
         return true;
       });
     }
@@ -99,14 +103,14 @@ Future<bool> checkLocations() async {
 }
 
 Future<bool> checkParentLocations() async {
-  String userId = await getCredentials();
-  String jsonString = await getJsonParentLocation();
+  String userId = await getParentCred();
   String name = await getToken();
+  await getParentLocations(userId);
   String locNameA = "";
   String title = "";
   String body = "";
   String now = DateTime.now().toString();
-
+  String jsonString = await getJsonParentLocation();
   Map<String, dynamic> jsonMap = jsonDecode(jsonString);
 
   Position userLocation = await Geolocator.getCurrentPosition();
@@ -115,10 +119,11 @@ Future<bool> checkParentLocations() async {
   List<dynamic> rads = jsonMap['radius'];
   List<dynamic> locId = jsonMap['id'];
   List<dynamic> locName = jsonMap['name'];
-  await getParentLocations(userId);
+  Logger().e(longitudeList.length);
+
   for (int i = 0; i < longitudeList.length; i++) {
     if (isUserInLocation(latitudeList[i], longitudeList[i],
-        userLocation.latitude ?? 0, userLocation.longitude ?? 0, rads[i])) {
+        userLocation.latitude, userLocation.longitude, rads[i])) {
       WidgetsFlutterBinding.ensureInitialized();
       await Firebase.initializeApp();
       await updateUserLocationId(userId, locId[i]);
@@ -136,7 +141,8 @@ Future<bool> checkParentLocations() async {
           update_date: DateTime.now());
 
       await addUserNotification(newNoti);
-      await sendGroupPushMessage(locId[i], title, body).then((value) {
+      await sendGroupPushMessage(locId[i].toLowerCase(), title, body)
+          .then((value) {
         return true;
       });
     }
@@ -154,7 +160,7 @@ Future<void> sendGroupPushMessage(
         'key=AAAA6nApToE:APA91bGgoSB0zwS8kUhtHTEpT5-kNHVz2ZWqAExFAVU49ykuXjob1BqqgarFrJ-ZetrWK8NSZaAvYVM0AtajFo3XaZ9eELkm165SGTesOfg0fB6gFp8VxzVKnbkbohV777HsP0jeEoAB',
   };
   final bodyJson = {
-    'to': "/topics/$token",
+    'to': "/topics/topic$token",
     'priority': 'high',
     'notification': {
       'title': title,
@@ -206,6 +212,7 @@ Future<String> getJsonLocation() async {
 Future<String> getJsonParentLocation() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String userid = prefs.getString('jsonParentLocations') ?? '';
+
   return userid;
 }
 
@@ -305,7 +312,8 @@ class _PeopleMapState extends State<PeopleMap> {
 
   void initParentLocations() {
     for (var element in globals.parentLocations) {
-      FirebaseMessaging.instance.subscribeToTopic(element.id);
+      FirebaseMessaging.instance
+          .subscribeToTopic("topic${element.id.toLowerCase()}");
 
       markerList.add(
         Marker(
@@ -331,7 +339,8 @@ class _PeopleMapState extends State<PeopleMap> {
 
   void initLocations() {
     for (var element in globals.locations) {
-      FirebaseMessaging.instance.subscribeToTopic(element.id);
+      FirebaseMessaging.instance
+          .subscribeToTopic("topic${element.id.toLowerCase()}");
 
       markerList.add(
         Marker(

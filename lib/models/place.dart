@@ -30,8 +30,8 @@ class PlaceLocation {
         address: json['address'],
         userId: json['userId'],
         id: json['id'],
-        create_date: DateTime.fromMillisecondsSinceEpoch(json['create_date']),
-        update_date: DateTime.fromMicrosecondsSinceEpoch(json['update_date']));
+        create_date: (json['create_date']).toDate(),
+        update_date: (json['update_date']).toDate());
   }
 
   Map<String, dynamic> toJson() => {

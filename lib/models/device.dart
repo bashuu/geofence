@@ -27,8 +27,8 @@ class DeviceModel {
         token: json['token'],
         user_id: json['user_id'],
         id: json['id'],
-        create_date: DateTime.fromMillisecondsSinceEpoch(json['create_date']),
-        update_date: DateTime.fromMicrosecondsSinceEpoch(json['update_date']));
+        create_date: (json['create_date']).toDate(),
+        update_date: (json['create_date']).toDate());
   }
 
   Map<String, dynamic> toJson() => {
